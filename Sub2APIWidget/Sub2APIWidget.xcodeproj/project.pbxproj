@@ -1,0 +1,632 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		500000000000000000000101 /* Sub2APIWidgetApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 500000000000000000000001 /* Sub2APIWidgetApp.swift */; };
+		500000000000000000000102 /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 500000000000000000000002 /* AppState.swift */; };
+		500000000000000000000103 /* LoginWebView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 500000000000000000000003 /* LoginWebView.swift */; };
+		500000000000000000000104 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 500000000000000000000004 /* ContentView.swift */; };
+		500000000000000000000105 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 500000000000000000000005 /* Assets.xcassets */; };
+		500000000000000000000106 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 500000000000000000000006 /* Preview Assets.xcassets */; };
+		500000000000000000000107 /* Sub2APIWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 500000000000000000000041 /* Sub2APIWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		500000000000000000000108 /* WebKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 500000000000000000000071 /* WebKit.framework */; };
+		500000000000000000000109 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 500000000000000000000072 /* WidgetKit.framework */; };
+		50000000000000000000010A /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 500000000000000000000073 /* Security.framework */; };
+		50000000000000000000010B /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 500000000000000000000074 /* SwiftUI.framework */; };
+		50000000000000000000010C /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 500000000000000000000072 /* WidgetKit.framework */; };
+		50000000000000000000010D /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 500000000000000000000074 /* SwiftUI.framework */; };
+		50000000000000000000010E /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 500000000000000000000073 /* Security.framework */; };
+		500000000000000000000121 /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 500000000000000000000021 /* Constants.swift */; };
+		500000000000000000000122 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 500000000000000000000022 /* Models.swift */; };
+		500000000000000000000123 /* Sub2APIDecoding.swift in Sources */ = {isa = PBXBuildFile; fileRef = 500000000000000000000023 /* Sub2APIDecoding.swift */; };
+		500000000000000000000124 /* SnapshotBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 500000000000000000000024 /* SnapshotBuilder.swift */; };
+		500000000000000000000125 /* SnapshotStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 500000000000000000000025 /* SnapshotStore.swift */; };
+		500000000000000000000126 /* KeychainStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 500000000000000000000026 /* KeychainStore.swift */; };
+		500000000000000000000127 /* Sub2APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 500000000000000000000027 /* Sub2APIClient.swift */; };
+		500000000000000000000128 /* Poller.swift in Sources */ = {isa = PBXBuildFile; fileRef = 500000000000000000000028 /* Poller.swift */; };
+		500000000000000000000129 /* AppIntents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 500000000000000000000029 /* AppIntents.swift */; };
+		50000000000000000000012A /* URLRouting.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50000000000000000000002A /* URLRouting.swift */; };
+		50000000000000000000012B /* MetricFormatters.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50000000000000000000002B /* MetricFormatters.swift */; };
+		500000000000000000000131 /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 500000000000000000000021 /* Constants.swift */; };
+		500000000000000000000132 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 500000000000000000000022 /* Models.swift */; };
+		500000000000000000000133 /* Sub2APIDecoding.swift in Sources */ = {isa = PBXBuildFile; fileRef = 500000000000000000000023 /* Sub2APIDecoding.swift */; };
+		500000000000000000000134 /* SnapshotBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 500000000000000000000024 /* SnapshotBuilder.swift */; };
+		500000000000000000000135 /* SnapshotStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 500000000000000000000025 /* SnapshotStore.swift */; };
+		500000000000000000000136 /* KeychainStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 500000000000000000000026 /* KeychainStore.swift */; };
+		500000000000000000000137 /* Sub2APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 500000000000000000000027 /* Sub2APIClient.swift */; };
+		500000000000000000000138 /* Poller.swift in Sources */ = {isa = PBXBuildFile; fileRef = 500000000000000000000028 /* Poller.swift */; };
+		500000000000000000000139 /* AppIntents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 500000000000000000000029 /* AppIntents.swift */; };
+		50000000000000000000013A /* URLRouting.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50000000000000000000002A /* URLRouting.swift */; };
+		50000000000000000000013B /* MetricFormatters.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50000000000000000000002B /* MetricFormatters.swift */; };
+		500000000000000000000151 /* Sub2APIWidgetBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 500000000000000000000031 /* Sub2APIWidgetBundle.swift */; };
+		500000000000000000000152 /* Sub2APIStatusWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 500000000000000000000032 /* Sub2APIStatusWidget.swift */; };
+		500000000000000000000153 /* PlatformActivityWidgetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 500000000000000000000033 /* PlatformActivityWidgetView.swift */; };
+		500000000000000000000154 /* ServerHealthWidgetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 500000000000000000000034 /* ServerHealthWidgetView.swift */; };
+		500000000000000000000155 /* WidgetComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 500000000000000000000035 /* WidgetComponents.swift */; };
+		500000000000000000000156 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 500000000000000000000036 /* Assets.xcassets */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		500000000000000000000201 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 500000000000000000000300 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 500000000000000000000402;
+			remoteInfo = Sub2APIWidgetExtension;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		500000000000000000000502 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				500000000000000000000107 /* Sub2APIWidgetExtension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		500000000000000000000001 /* Sub2APIWidgetApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sub2APIWidgetApp.swift; sourceTree = "<group>"; };
+		500000000000000000000002 /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
+		500000000000000000000003 /* LoginWebView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginWebView.swift; sourceTree = "<group>"; };
+		500000000000000000000004 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		500000000000000000000005 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		500000000000000000000006 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
+		500000000000000000000007 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		500000000000000000000008 /* Sub2APIWidget.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Sub2APIWidget.entitlements; sourceTree = "<group>"; };
+		500000000000000000000021 /* Constants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Constants.swift; sourceTree = "<group>"; };
+		500000000000000000000022 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
+		500000000000000000000023 /* Sub2APIDecoding.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sub2APIDecoding.swift; sourceTree = "<group>"; };
+		500000000000000000000024 /* SnapshotBuilder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SnapshotBuilder.swift; sourceTree = "<group>"; };
+		500000000000000000000025 /* SnapshotStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SnapshotStore.swift; sourceTree = "<group>"; };
+		500000000000000000000026 /* KeychainStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainStore.swift; sourceTree = "<group>"; };
+		500000000000000000000027 /* Sub2APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sub2APIClient.swift; sourceTree = "<group>"; };
+		500000000000000000000028 /* Poller.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Poller.swift; sourceTree = "<group>"; };
+		500000000000000000000029 /* AppIntents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppIntents.swift; sourceTree = "<group>"; };
+		50000000000000000000002A /* URLRouting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = URLRouting.swift; sourceTree = "<group>"; };
+		50000000000000000000002B /* MetricFormatters.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MetricFormatters.swift; sourceTree = "<group>"; };
+		500000000000000000000031 /* Sub2APIWidgetBundle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sub2APIWidgetBundle.swift; sourceTree = "<group>"; };
+		500000000000000000000032 /* Sub2APIStatusWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sub2APIStatusWidget.swift; sourceTree = "<group>"; };
+		500000000000000000000033 /* PlatformActivityWidgetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlatformActivityWidgetView.swift; sourceTree = "<group>"; };
+		500000000000000000000034 /* ServerHealthWidgetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServerHealthWidgetView.swift; sourceTree = "<group>"; };
+		500000000000000000000035 /* WidgetComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetComponents.swift; sourceTree = "<group>"; };
+		500000000000000000000036 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		500000000000000000000037 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		500000000000000000000038 /* Sub2APIWidgetExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Sub2APIWidgetExtension.entitlements; sourceTree = "<group>"; };
+		500000000000000000000040 /* Sub2APIWidget.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Sub2APIWidget.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		500000000000000000000041 /* Sub2APIWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = Sub2APIWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		500000000000000000000071 /* WebKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WebKit.framework; path = System/Library/Frameworks/WebKit.framework; sourceTree = SDKROOT; };
+		500000000000000000000072 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
+		500000000000000000000073 /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = System/Library/Frameworks/Security.framework; sourceTree = SDKROOT; };
+		500000000000000000000074 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		500000000000000000000601 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				50000000000000000000010B /* SwiftUI.framework in Frameworks */,
+				500000000000000000000109 /* WidgetKit.framework in Frameworks */,
+				500000000000000000000108 /* WebKit.framework in Frameworks */,
+				50000000000000000000010A /* Security.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		500000000000000000000602 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				50000000000000000000010D /* SwiftUI.framework in Frameworks */,
+				50000000000000000000010C /* WidgetKit.framework in Frameworks */,
+				50000000000000000000010E /* Security.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		500000000000000000000301 = {
+			isa = PBXGroup;
+			children = (
+				500000000000000000000310 /* App */,
+				500000000000000000000320 /* Shared */,
+				500000000000000000000330 /* Widget */,
+				500000000000000000000340 /* Frameworks */,
+				500000000000000000000350 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		500000000000000000000310 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				500000000000000000000001 /* Sub2APIWidgetApp.swift */,
+				500000000000000000000002 /* AppState.swift */,
+				500000000000000000000003 /* LoginWebView.swift */,
+				500000000000000000000004 /* ContentView.swift */,
+				500000000000000000000007 /* Info.plist */,
+				500000000000000000000008 /* Sub2APIWidget.entitlements */,
+				500000000000000000000005 /* Assets.xcassets */,
+				500000000000000000000311 /* Preview Content */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		500000000000000000000311 /* Preview Content */ = {
+			isa = PBXGroup;
+			children = (
+				500000000000000000000006 /* Preview Assets.xcassets */,
+			);
+			path = "Preview Content";
+			sourceTree = "<group>";
+		};
+		500000000000000000000320 /* Shared */ = {
+			isa = PBXGroup;
+			children = (
+				500000000000000000000021 /* Constants.swift */,
+				500000000000000000000022 /* Models.swift */,
+				500000000000000000000023 /* Sub2APIDecoding.swift */,
+				500000000000000000000024 /* SnapshotBuilder.swift */,
+				500000000000000000000025 /* SnapshotStore.swift */,
+				500000000000000000000026 /* KeychainStore.swift */,
+				500000000000000000000027 /* Sub2APIClient.swift */,
+				500000000000000000000028 /* Poller.swift */,
+				500000000000000000000029 /* AppIntents.swift */,
+				50000000000000000000002A /* URLRouting.swift */,
+				50000000000000000000002B /* MetricFormatters.swift */,
+			);
+			path = Shared;
+			sourceTree = "<group>";
+		};
+		500000000000000000000330 /* Widget */ = {
+			isa = PBXGroup;
+			children = (
+				500000000000000000000031 /* Sub2APIWidgetBundle.swift */,
+				500000000000000000000032 /* Sub2APIStatusWidget.swift */,
+				500000000000000000000033 /* PlatformActivityWidgetView.swift */,
+				500000000000000000000034 /* ServerHealthWidgetView.swift */,
+				500000000000000000000035 /* WidgetComponents.swift */,
+				500000000000000000000037 /* Info.plist */,
+				500000000000000000000038 /* Sub2APIWidgetExtension.entitlements */,
+				500000000000000000000036 /* Assets.xcassets */,
+			);
+			path = Widget;
+			sourceTree = "<group>";
+		};
+		500000000000000000000340 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				500000000000000000000071 /* WebKit.framework */,
+				500000000000000000000072 /* WidgetKit.framework */,
+				500000000000000000000073 /* Security.framework */,
+				500000000000000000000074 /* SwiftUI.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		500000000000000000000350 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				500000000000000000000040 /* Sub2APIWidget.app */,
+				500000000000000000000041 /* Sub2APIWidgetExtension.appex */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		500000000000000000000401 /* Sub2APIWidget */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 500000000000000000000901 /* Build configuration list for PBXNativeTarget "Sub2APIWidget" */;
+			buildPhases = (
+				500000000000000000000501 /* Sources */,
+				500000000000000000000601 /* Frameworks */,
+				500000000000000000000701 /* Resources */,
+				500000000000000000000502 /* Embed Foundation Extensions */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				500000000000000000000202 /* PBXTargetDependency */,
+			);
+			name = Sub2APIWidget;
+			productName = Sub2APIWidget;
+			productReference = 500000000000000000000040 /* Sub2APIWidget.app */;
+			productType = "com.apple.product-type.application";
+		};
+		500000000000000000000402 /* Sub2APIWidgetExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 500000000000000000000902 /* Build configuration list for PBXNativeTarget "Sub2APIWidgetExtension" */;
+			buildPhases = (
+				500000000000000000000503 /* Sources */,
+				500000000000000000000602 /* Frameworks */,
+				500000000000000000000702 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Sub2APIWidgetExtension;
+			productName = Sub2APIWidgetExtension;
+			productReference = 500000000000000000000041 /* Sub2APIWidgetExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		500000000000000000000300 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 2600;
+				LastUpgradeCheck = 2600;
+				TargetAttributes = {
+					500000000000000000000401 = {
+						CreatedOnToolsVersion = 26.0;
+					};
+					500000000000000000000402 = {
+						CreatedOnToolsVersion = 26.0;
+					};
+				};
+			};
+			buildConfigurationList = 500000000000000000000900 /* Build configuration list for PBXProject "Sub2APIWidget" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 500000000000000000000301;
+			productRefGroup = 500000000000000000000350 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				500000000000000000000401 /* Sub2APIWidget */,
+				500000000000000000000402 /* Sub2APIWidgetExtension */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		500000000000000000000701 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				500000000000000000000106 /* Preview Assets.xcassets in Resources */,
+				500000000000000000000105 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		500000000000000000000702 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				500000000000000000000156 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		500000000000000000000501 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				500000000000000000000101 /* Sub2APIWidgetApp.swift in Sources */,
+				500000000000000000000102 /* AppState.swift in Sources */,
+				500000000000000000000103 /* LoginWebView.swift in Sources */,
+				500000000000000000000104 /* ContentView.swift in Sources */,
+				500000000000000000000121 /* Constants.swift in Sources */,
+				500000000000000000000122 /* Models.swift in Sources */,
+				500000000000000000000123 /* Sub2APIDecoding.swift in Sources */,
+				500000000000000000000124 /* SnapshotBuilder.swift in Sources */,
+				500000000000000000000125 /* SnapshotStore.swift in Sources */,
+				500000000000000000000126 /* KeychainStore.swift in Sources */,
+				500000000000000000000127 /* Sub2APIClient.swift in Sources */,
+				500000000000000000000128 /* Poller.swift in Sources */,
+				500000000000000000000129 /* AppIntents.swift in Sources */,
+				50000000000000000000012A /* URLRouting.swift in Sources */,
+				50000000000000000000012B /* MetricFormatters.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		500000000000000000000503 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				500000000000000000000151 /* Sub2APIWidgetBundle.swift in Sources */,
+				500000000000000000000152 /* Sub2APIStatusWidget.swift in Sources */,
+				500000000000000000000153 /* PlatformActivityWidgetView.swift in Sources */,
+				500000000000000000000154 /* ServerHealthWidgetView.swift in Sources */,
+				500000000000000000000155 /* WidgetComponents.swift in Sources */,
+				500000000000000000000131 /* Constants.swift in Sources */,
+				500000000000000000000132 /* Models.swift in Sources */,
+				500000000000000000000133 /* Sub2APIDecoding.swift in Sources */,
+				500000000000000000000134 /* SnapshotBuilder.swift in Sources */,
+				500000000000000000000135 /* SnapshotStore.swift in Sources */,
+				500000000000000000000136 /* KeychainStore.swift in Sources */,
+				500000000000000000000137 /* Sub2APIClient.swift in Sources */,
+				500000000000000000000138 /* Poller.swift in Sources */,
+				500000000000000000000139 /* AppIntents.swift in Sources */,
+				50000000000000000000013A /* URLRouting.swift in Sources */,
+				50000000000000000000013B /* MetricFormatters.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		500000000000000000000202 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 500000000000000000000402 /* Sub2APIWidgetExtension */;
+			targetProxy = 500000000000000000000201 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		500000000000000000000801 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		500000000000000000000802 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+			};
+			name = Release;
+		};
+		500000000000000000000811 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = App/Sub2APIWidget.entitlements;
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "\"App/Preview Content\"";
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = App/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = top.jeffreyhjh.Sub2APIWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 6.0;
+			};
+			name = Debug;
+		};
+		500000000000000000000812 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = App/Sub2APIWidget.entitlements;
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "\"App/Preview Content\"";
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = App/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = top.jeffreyhjh.Sub2APIWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 6.0;
+			};
+			name = Release;
+		};
+		500000000000000000000821 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_ENTITLEMENTS = Widget/Sub2APIWidgetExtension.entitlements;
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Widget/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = top.jeffreyhjh.Sub2APIWidget.WidgetExtension;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				REGISTER_APP_GROUPS = YES;
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 6.0;
+			};
+			name = Debug;
+		};
+		500000000000000000000822 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_ENTITLEMENTS = Widget/Sub2APIWidgetExtension.entitlements;
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Widget/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = top.jeffreyhjh.Sub2APIWidget.WidgetExtension;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				REGISTER_APP_GROUPS = YES;
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 6.0;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		500000000000000000000900 /* Build configuration list for PBXProject "Sub2APIWidget" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				500000000000000000000801 /* Debug */,
+				500000000000000000000802 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		500000000000000000000901 /* Build configuration list for PBXNativeTarget "Sub2APIWidget" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				500000000000000000000811 /* Debug */,
+				500000000000000000000812 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		500000000000000000000902 /* Build configuration list for PBXNativeTarget "Sub2APIWidgetExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				500000000000000000000821 /* Debug */,
+				500000000000000000000822 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 500000000000000000000300 /* Project object */;
+}

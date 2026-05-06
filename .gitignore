@@ -1,0 +1,35 @@
+# Local reference checkout, not part of the widget app repository.
+sub2api/
+
+# Project-local debug notes and transient analysis output.
+debug/
+
+# macOS and Xcode user state.
+.DS_Store
+**/.DS_Store
+*.xcuserstate
+xcuserdata/
+**/xcuserdata/
+
+# Xcode build products.
+DerivedData/
+build/
+Archives/
+*.xcarchive/
+*.dSYM/
+*.ipa
+*.app
+*.pkg
+*.dmg
+*.zip
+
+# Signing and private credentials.
+*.p12
+*.cer
+*.mobileprovision
+*.provisionprofile
+*.pem
+*.key
+*.env
+.env.*
+!.env.example

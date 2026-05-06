@@ -1,0 +1,89 @@
+name: Release macOS ARM64
+
+on:
+  push:
+    branches:
+      - "**"
+
+permissions:
+  contents: write
+
+jobs:
+  detect-version:
+    name: Detect release version
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.detect.outputs.version }}
+      should_release: ${{ steps.detect.outputs.should_release }}
+    steps:
+      - name: Detect Vx.x.x in commit message
+        id: detect
+        shell: bash
+        run: |
+          version="$(
+            jq -r '[.head_commit.message, (.commits[]?.message)] | map(select(. != null)) | join("\n")' "$GITHUB_EVENT_PATH" \
+              | grep -Eo 'V[0-9]+\.[0-9]+\.[0-9]+' \
+              | head -n 1 || true
+          )"
+          if [ -n "$version" ]; then
+            echo "version=$version" >> "$GITHUB_OUTPUT"
+            echo "should_release=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "version=" >> "$GITHUB_OUTPUT"
+            echo "should_release=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  build-release:
+    name: Build and publish ${{ needs.detect-version.outputs.version }}
+    needs: detect-version
+    if: needs.detect-version.outputs.should_release == 'true'
+    runs-on: macos-15
+    defaults:
+      run:
+        working-directory: Sub2APIWidget
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: |
+          sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
+          xcodebuild -version
+
+      - name: Build unsigned ARM64 archive
+        run: |
+          xcodebuild \
+            -project Sub2APIWidget.xcodeproj \
+            -scheme Sub2APIWidget \
+            -configuration Release \
+            -destination 'generic/platform=macOS' \
+            -archivePath "$RUNNER_TEMP/Sub2APIWidget.xcarchive" \
+            -derivedDataPath "$RUNNER_TEMP/Sub2APIWidget-DerivedData" \
+            ARCHS=arm64 \
+            ONLY_ACTIVE_ARCH=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            archive
+
+      - name: Package app
+        run: |
+          mkdir -p "$RUNNER_TEMP/package"
+          ditto "$RUNNER_TEMP/Sub2APIWidget.xcarchive/Products/Applications/Sub2APIWidget.app" "$RUNNER_TEMP/package/Sub2APIWidget.app"
+          ditto -c -k --sequesterRsrc --keepParent "$RUNNER_TEMP/package/Sub2APIWidget.app" "$RUNNER_TEMP/Sub2APIWidget-${{ needs.detect-version.outputs.version }}-macos-arm64.zip"
+
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.detect-version.outputs.version }}
+          ASSET: ${{ runner.temp }}/Sub2APIWidget-${{ needs.detect-version.outputs.version }}-macos-arm64.zip
+        run: |
+          if gh release view "$VERSION" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release upload "$VERSION" "$ASSET" --repo "$GITHUB_REPOSITORY" --clobber
+          else
+            gh release create "$VERSION" "$ASSET" \
+              --repo "$GITHUB_REPOSITORY" \
+              --target "$GITHUB_SHA" \
+              --title "Sub2API Widget $VERSION" \
+              --generate-notes
+          fi
