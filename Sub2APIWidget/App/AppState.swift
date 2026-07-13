@@ -18,34 +18,47 @@ final class AppState: ObservableObject {
     private var pollingRestartTask: Task<Void, Never>?
 
     init() {
+        poller.onAuthenticationRequired = { [weak self] in
+            self?.handleAuthenticationRequired()
+        }
         load()
     }
 
     func load() {
         instance = snapshotStore.loadInstances().first ?? .production
-        tokens = try? KeychainStore.loadTokens(instanceID: instance.id)
+        tokens = try? KeychainStore.loadTokens(for: instance)
         statusMessage = tokens == nil ? "请先登录 Sub2API" : "已读取本地登录凭据"
-        if snapshotStore.loadSnapshot(instanceID: instance.id) == nil {
-            try? snapshotStore.saveSnapshot(.placeholder(instanceID: instance.id))
-        }
         startPollingIfAuthenticated(reason: "自动轮询已启动")
     }
 
     func saveInstance(name: String, baseURLText: String) {
         guard let url = URL(string: baseURLText.trimmingCharacters(in: .whitespacesAndNewlines)),
-              let scheme = url.scheme,
-              ["https", "http"].contains(scheme)
+              url.isAllowedSub2APIBaseURL
         else {
-            statusMessage = "实例地址无效"
+            statusMessage = "实例地址无效：仅允许 HTTPS，localhost 可使用 HTTP"
             return
+        }
+
+        let originChanged = instance.baseURL.normalizedOrigin != url.normalizedOrigin
+        if originChanged {
+            pollingRestartTask?.cancel()
+            poller.stop()
+            KeychainStore.deleteTokens(instanceID: instance.id)
+            try? snapshotStore.clearSnapshot(instanceID: instance.id)
+            tokens = nil
         }
 
         instance.name = name.trimmingCharacters(in: .whitespacesAndNewlines).nilIfBlank ?? AppConstants.defaultInstanceName
         instance.baseURL = url
         do {
             try snapshotStore.saveInstances([instance])
-            statusMessage = "实例已保存"
-            schedulePollingRestartIfNeeded()
+            if originChanged {
+                statusMessage = "实例地址已变更，请重新登录"
+                WidgetCenter.shared.reloadAllTimelines()
+            } else {
+                statusMessage = "实例已保存"
+                schedulePollingRestartIfNeeded()
+            }
         } catch {
             statusMessage = error.localizedDescription
         }
@@ -53,8 +66,8 @@ final class AppState: ObservableObject {
 
     func handleLoginTokens(_ tokenBundle: AuthTokenBundle) {
         do {
-            try KeychainStore.saveTokens(tokenBundle, instanceID: instance.id)
-            tokens = tokenBundle
+            try KeychainStore.saveTokens(tokenBundle, for: instance)
+            tokens = try KeychainStore.loadTokens(for: instance)
             statusMessage = "登录已保存"
             showingLogin = false
             startPollingIfAuthenticated(reason: "登录成功，自动轮询已启动")
@@ -63,11 +76,15 @@ final class AppState: ObservableObject {
         }
     }
 
-    func signOut() {
-        KeychainStore.deleteTokens(instanceID: instance.id)
-        tokens = nil
+    func signOut() async {
+        pollingRestartTask?.cancel()
         poller.stop()
-        statusMessage = "已清除本地登录凭据"
+        KeychainStore.deleteTokens(instanceID: instance.id)
+        try? snapshotStore.clearSnapshot(instanceID: instance.id)
+        try? snapshotStore.saveSnapshot(.unavailable(instanceID: instance.id, reason: "已退出登录"))
+        tokens = nil
+        await WebSessionStore.clearAllData()
+        statusMessage = "已退出登录并清除本地会话"
         WidgetCenter.shared.reloadAllTimelines()
     }
 
@@ -121,5 +138,10 @@ final class AppState: ObservableObject {
         guard tokens != nil else { return }
         poller.start(instance: instance, config: displayConfig)
         statusMessage = reason
+    }
+
+    private func handleAuthenticationRequired() {
+        tokens = nil
+        statusMessage = "登录已失效，请重新登录"
     }
 }

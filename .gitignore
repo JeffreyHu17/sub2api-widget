@@ -13,6 +13,7 @@ xcuserdata/
 
 # Xcode build products.
 DerivedData/
+.build/
 build/
 Archives/
 *.xcarchive/

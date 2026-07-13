@@ -138,6 +138,73 @@ struct AccountAvailabilityDTO: Decodable {
     }
 }
 
+struct AccountsPageDTO: Decodable, Sendable {
+    var items: [AccountListItemDTO]
+    var total: Int64
+    var page: Int
+    var pageSize: Int
+    var pages: Int
+
+    enum CodingKeys: String, CodingKey {
+        case items, total, page, pages
+        case pageSize = "page_size"
+    }
+}
+
+struct AccountListItemDTO: Decodable, Sendable {
+    var id: Int64
+    var name: String
+    var platform: String
+    var type: String
+    var concurrency: Int
+    var currentConcurrency: Int
+    var status: String
+    var errorMessage: String?
+    var schedulable: Bool
+    var lastUsedAt: Date?
+    var rateLimitResetAt: Date?
+    var overloadUntil: Date?
+    var tempUnschedulableUntil: Date?
+    var quotaLimit: Double?
+    var quotaUsed: Double?
+    var quotaDailyLimit: Double?
+    var quotaDailyUsed: Double?
+    var quotaWeeklyLimit: Double?
+    var quotaWeeklyUsed: Double?
+    var quotaDailyResetAt: String?
+    var quotaWeeklyResetAt: String?
+    var currentWindowCost: Double?
+    var windowCostLimit: Double?
+    var activeSessions: Int?
+    var maxSessions: Int?
+    var currentRPM: Int?
+    var baseRPM: Int?
+
+    enum CodingKeys: String, CodingKey {
+        case id, name, platform, type, concurrency, status, schedulable
+        case currentConcurrency = "current_concurrency"
+        case errorMessage = "error_message"
+        case lastUsedAt = "last_used_at"
+        case rateLimitResetAt = "rate_limit_reset_at"
+        case overloadUntil = "overload_until"
+        case tempUnschedulableUntil = "temp_unschedulable_until"
+        case quotaLimit = "quota_limit"
+        case quotaUsed = "quota_used"
+        case quotaDailyLimit = "quota_daily_limit"
+        case quotaDailyUsed = "quota_daily_used"
+        case quotaWeeklyLimit = "quota_weekly_limit"
+        case quotaWeeklyUsed = "quota_weekly_used"
+        case quotaDailyResetAt = "quota_daily_reset_at"
+        case quotaWeeklyResetAt = "quota_weekly_reset_at"
+        case currentWindowCost = "current_window_cost"
+        case windowCostLimit = "window_cost_limit"
+        case activeSessions = "active_sessions"
+        case maxSessions = "max_sessions"
+        case currentRPM = "current_rpm"
+        case baseRPM = "base_rpm"
+    }
+}
+
 struct DashboardSnapshotDTO: Decodable {
     var generatedAt: Date?
     var overview: DashboardOverviewDTO?

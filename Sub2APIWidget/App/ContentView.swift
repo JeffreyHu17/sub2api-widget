@@ -6,7 +6,9 @@ struct ContentView: View {
     @State private var baseURLText = AppConstants.defaultBaseURL.absoluteString
 
     private var snapshot: MonitorSnapshot {
-        appState.poller.latestSnapshot ?? SnapshotStore.shared.loadSnapshot(instanceID: appState.instance.id) ?? .placeholder()
+        appState.poller.latestSnapshot
+            ?? SnapshotStore.shared.loadSnapshot(instanceID: appState.instance.id)
+            ?? .unavailable(instanceID: appState.instance.id)
     }
 
     var body: some View {
@@ -52,7 +54,7 @@ struct ContentView: View {
                     appState.showingLogin = true
                 }
                 Button("清除本地凭据", role: .destructive) {
-                    appState.signOut()
+                    Task { await appState.signOut() }
                 }
                 .disabled(appState.tokens == nil)
             }
@@ -93,6 +95,7 @@ struct ContentView: View {
                 healthStrip
                 widgetCatalog
                 platformOverview
+                accountOverview
                 diagnosticsPanel
             }
             .padding(28)
@@ -136,6 +139,7 @@ struct ContentView: View {
                     WidgetCatalogItem(title: platform.shortName, subtitle: platform.displayName)
                 }
                 WidgetCatalogItem(title: "服务器状态", subtitle: "健康/请求/资源")
+                WidgetCatalogItem(title: "账号监控", subtitle: "连接/排队/额度")
             }
         }
     }
@@ -150,6 +154,22 @@ struct ContentView: View {
         }
     }
 
+    private var accountOverview: some View {
+        Panel(title: "账号监控 · \(snapshot.monitoredAccounts.count)") {
+            if snapshot.monitoredAccounts.isEmpty {
+                Text("暂无账号数据，请完成登录并刷新。")
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+            } else {
+                VStack(spacing: 8) {
+                    ForEach(snapshot.monitoredAccounts.prefix(10)) { account in
+                        AccountDashboardRow(account: account)
+                    }
+                }
+            }
+        }
+    }
+
     private var diagnosticsPanel: some View {
         Panel(title: "刷新诊断") {
             LazyVGrid(columns: Array(repeating: GridItem(.flexible(minimum: 140), spacing: 12), count: 3), spacing: 12) {
@@ -157,7 +177,6 @@ struct ContentView: View {
                 DiagnosticItem(title: "下次拉取", value: appState.poller.nextFetchAt.map { MetricFormatters.clockTime($0) } ?? MetricFormatters.clockTime(snapshot.diagnostics.nextFetchAt))
                 DiagnosticItem(title: "快照写入", value: MetricFormatters.clockTime(snapshot.diagnostics.lastSnapshotWriteAt))
                 DiagnosticItem(title: "Widget 请求", value: MetricFormatters.clockTime(snapshot.diagnostics.lastWidgetReloadRequestAt))
-                DiagnosticItem(title: "Widget 渲染", value: MetricFormatters.clockTime(snapshot.diagnostics.lastWidgetRenderAt))
                 DiagnosticItem(title: "轮询状态", value: appState.poller.isRunning ? "运行中 \(appState.selectedRefresh.displayName)" : "已停止")
             }
             if let error = snapshot.diagnostics.lastError {
@@ -311,6 +330,62 @@ private struct PlatformDashboardRow: View {
         .padding(12)
         .background(AppTheme.panelSoft)
         .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+    }
+}
+
+private struct AccountDashboardRow: View {
+    var account: AccountMonitor
+
+    var body: some View {
+        HStack(spacing: 14) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(account.name)
+                    .font(.headline)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.65)
+                Text("\(account.platformDisplayName) · \(account.type.uppercased()) · #\(account.id)")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            .frame(minWidth: 220, maxWidth: .infinity, alignment: .leading)
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text("连接 \(account.currentInUse)/\(account.maxConcurrency) · 队列 \(account.waitingInQueue)")
+                    .font(.callout.weight(.semibold).monospacedDigit())
+                ProgressView(value: account.loadPercent, total: 100)
+                    .tint(account.loadPercent >= 90 ? .orange : .green)
+            }
+            .frame(width: 210, alignment: .leading)
+
+            if let quota = account.quotas.first {
+                VStack(alignment: .trailing, spacing: 3) {
+                    Text("\(quota.label) \(Int(quota.usedPercent.rounded()))%")
+                        .font(.callout.weight(.bold).monospacedDigit())
+                    Text("\(MetricFormatters.decimal(quota.used))/\(MetricFormatters.decimal(quota.limit))")
+                        .font(.caption.monospacedDigit())
+                        .foregroundStyle(.secondary)
+                }
+                .frame(width: 110, alignment: .trailing)
+            } else {
+                Text("额度 --")
+                    .font(.callout.weight(.semibold))
+                    .foregroundStyle(.secondary)
+                    .frame(width: 110, alignment: .trailing)
+            }
+
+            StatusPill(text: account.status.displayName, status: pillStatus(account.status))
+        }
+        .padding(12)
+        .background(AppTheme.panelSoft)
+        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+    }
+
+    private func pillStatus(_ status: AccountHealthStatus) -> PillStatus {
+        switch status {
+        case .healthy, .busy: .ok
+        case .rateLimited, .overloaded, .unavailable, .disabled: .warning
+        case .error: .error
+        }
     }
 }
 

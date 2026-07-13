@@ -10,5 +10,6 @@ struct Sub2APIWidgetBundle: WidgetBundle {
         PlatformActivityStatusWidget(platform: .gemini)
         PlatformActivityStatusWidget(platform: .antigravity)
         ServerHealthStatusWidget()
+        AccountMonitorStatusWidget()
     }
 }
