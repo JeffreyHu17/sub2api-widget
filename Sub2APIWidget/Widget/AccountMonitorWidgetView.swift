@@ -7,7 +7,7 @@ struct AccountMonitorWidgetView: View {
     let family: WidgetFamily
 
     private var accounts: [AccountMonitor] {
-        let selectedIDs = config.accountIDs ?? config.accountID.map { [$0] } ?? []
+        let selectedIDs = config.selectedAccountIDs
         if !selectedIDs.isEmpty {
             let selectedSet = Set(selectedIDs)
             return entry.snapshot.monitoredAccounts.filter { selectedSet.contains($0.id) }

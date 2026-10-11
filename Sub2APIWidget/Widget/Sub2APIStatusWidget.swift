@@ -28,6 +28,8 @@ struct Sub2APIProvider<Intent: Sub2APIDisplayConfigurationIntent>: AppIntentTime
     }
 
     func placeholder(in context: Context) -> Sub2APIEntry {
+        // Gallery preview only — fabricated sample data is acceptable here and
+        // nowhere else. Real timelines use `entry(for:)` which returns `unavailable`.
         Sub2APIEntry(
             date: Date(),
             displayConfig: WidgetDisplayConfig.defaultActivity,
@@ -60,15 +62,22 @@ struct Sub2APIProvider<Intent: Sub2APIDisplayConfigurationIntent>: AppIntentTime
 
     private func entry(for configuration: Intent) -> Sub2APIEntry {
         let instances = SnapshotStore.shared.loadInstances()
+        // loadInstances() guarantees a non-empty result, but indexing without a
+        // guard would trap the widget extension process if that ever changed.
         let instanceID = configuration.displayConfig.instanceID
-        let instance = instances.first { $0.id == instanceID } ?? instances[0]
-        let snapshot = SnapshotStore.shared.loadSnapshot(instanceID: instance.id)
-            ?? .unavailable(instanceID: instance.id)
+        let resolved: InstanceConfig
+        if let match = instances.first(where: { $0.id == instanceID }) {
+            resolved = match
+        } else {
+            resolved = instances.first ?? .production
+        }
+        let snapshot = SnapshotStore.shared.loadSnapshot(instanceID: resolved.id)
+            ?? .unavailable(instanceID: resolved.id)
         var displayConfig = configuration.displayConfig
-        displayConfig.instanceID = instance.id
+        displayConfig.instanceID = resolved.id
         displayConfig.platformFilter = forcedPlatform
         displayConfig.id = "\(displayConfig.instanceID)-\(forcedPlatform?.rawValue ?? displayConfig.kind.rawValue)"
-        return Sub2APIEntry(date: Date(), displayConfig: displayConfig, snapshot: snapshot, instance: instance)
+        return Sub2APIEntry(date: Date(), displayConfig: displayConfig, snapshot: snapshot, instance: resolved)
     }
 
     private func timelineEntryCount(for interval: TimeInterval) -> Int {

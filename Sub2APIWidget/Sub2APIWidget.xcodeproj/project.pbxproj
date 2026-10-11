@@ -37,12 +37,11 @@
 		500000000000000000000133 /* Sub2APIDecoding.swift in Sources */ = {isa = PBXBuildFile; fileRef = 500000000000000000000023 /* Sub2APIDecoding.swift */; };
 		500000000000000000000134 /* SnapshotBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 500000000000000000000024 /* SnapshotBuilder.swift */; };
 		500000000000000000000135 /* SnapshotStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 500000000000000000000025 /* SnapshotStore.swift */; };
-		500000000000000000000136 /* KeychainStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 500000000000000000000026 /* KeychainStore.swift */; };
-		500000000000000000000137 /* Sub2APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 500000000000000000000027 /* Sub2APIClient.swift */; };
-		500000000000000000000138 /* Poller.swift in Sources */ = {isa = PBXBuildFile; fileRef = 500000000000000000000028 /* Poller.swift */; };
 		500000000000000000000139 /* AppIntents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 500000000000000000000029 /* AppIntents.swift */; };
 		50000000000000000000013A /* URLRouting.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50000000000000000000002A /* URLRouting.swift */; };
 		50000000000000000000013B /* MetricFormatters.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50000000000000000000002B /* MetricFormatters.swift */; };
+		50000000000000000000013C /* SafeMessage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50000000000000000000002C /* SafeMessage.swift */; };
+		50000000000000000000013D /* SafeMessage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50000000000000000000002C /* SafeMessage.swift */; };
 		500000000000000000000151 /* Sub2APIWidgetBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 500000000000000000000031 /* Sub2APIWidgetBundle.swift */; };
 		500000000000000000000152 /* Sub2APIStatusWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 500000000000000000000032 /* Sub2APIStatusWidget.swift */; };
 		500000000000000000000153 /* PlatformActivityWidgetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 500000000000000000000033 /* PlatformActivityWidgetView.swift */; };
@@ -96,6 +95,7 @@
 		500000000000000000000029 /* AppIntents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppIntents.swift; sourceTree = "<group>"; };
 		50000000000000000000002A /* URLRouting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = URLRouting.swift; sourceTree = "<group>"; };
 		50000000000000000000002B /* MetricFormatters.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MetricFormatters.swift; sourceTree = "<group>"; };
+		50000000000000000000002C /* SafeMessage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SafeMessage.swift; sourceTree = "<group>"; };
 		500000000000000000000031 /* Sub2APIWidgetBundle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sub2APIWidgetBundle.swift; sourceTree = "<group>"; };
 		500000000000000000000032 /* Sub2APIStatusWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sub2APIStatusWidget.swift; sourceTree = "<group>"; };
 		500000000000000000000033 /* PlatformActivityWidgetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlatformActivityWidgetView.swift; sourceTree = "<group>"; };
@@ -186,6 +186,7 @@
 				500000000000000000000029 /* AppIntents.swift */,
 				50000000000000000000002A /* URLRouting.swift */,
 				50000000000000000000002B /* MetricFormatters.swift */,
+				50000000000000000000002C /* SafeMessage.swift */,
 			);
 			path = Shared;
 			sourceTree = "<group>";
@@ -342,6 +343,7 @@
 				500000000000000000000129 /* AppIntents.swift in Sources */,
 				50000000000000000000012A /* URLRouting.swift in Sources */,
 				50000000000000000000012B /* MetricFormatters.swift in Sources */,
+				50000000000000000000013C /* SafeMessage.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -360,12 +362,10 @@
 				500000000000000000000133 /* Sub2APIDecoding.swift in Sources */,
 				500000000000000000000134 /* SnapshotBuilder.swift in Sources */,
 				500000000000000000000135 /* SnapshotStore.swift in Sources */,
-				500000000000000000000136 /* KeychainStore.swift in Sources */,
-				500000000000000000000137 /* Sub2APIClient.swift in Sources */,
-				500000000000000000000138 /* Poller.swift in Sources */,
 				500000000000000000000139 /* AppIntents.swift in Sources */,
 				50000000000000000000013A /* URLRouting.swift in Sources */,
 				50000000000000000000013B /* MetricFormatters.swift in Sources */,
+				50000000000000000000013D /* SafeMessage.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
