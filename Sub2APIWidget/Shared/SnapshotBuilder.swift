@@ -77,8 +77,16 @@ enum SnapshotBuilder {
     ) -> [AccountMonitor] {
         let liveAccounts = concurrency.map { Array($0.account.values) } ?? []
         let availabilityAccounts = availability.map { Array($0.account.values) } ?? []
-        let concurrencyByID = Dictionary(uniqueKeysWithValues: liveAccounts.map { ($0.accountID, $0) })
-        let availabilityByID = Dictionary(uniqueKeysWithValues: availabilityAccounts.map { ($0.accountID, $0) })
+        // Must NOT use Dictionary(uniqueKeysWithValues:): the response dictionary is
+        // keyed by a server-supplied string that can differ from account_id, so a
+        // duplicate account_id traps the whole process with an unrecoverable
+        // fatalError. Last write wins instead.
+        let concurrencyByID = liveAccounts.reduce(into: [Int64: AccountConcurrencyDTO]()) {
+            $0[$1.accountID] = $1
+        }
+        let availabilityByID = availabilityAccounts.reduce(into: [Int64: AccountAvailabilityDTO]()) {
+            $0[$1.accountID] = $1
+        }
 
         return (page?.items ?? []).map { account in
             let live = concurrencyByID[account.id]

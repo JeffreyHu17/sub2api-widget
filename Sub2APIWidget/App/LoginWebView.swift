@@ -59,8 +59,20 @@ struct LoginWebView: NSViewRepresentable {
           };
 
           window.addEventListener('storage', emitAuth);
-          window.setInterval(emitAuth, 500);
           emitAuth();
+
+          // Poll as a fallback for sessions restored without a setItem write,
+          // but back off and stop entirely once the token is captured.
+          let ticks = 0;
+          const timer = window.setInterval(() => {
+            ticks += 1;
+            if (localStorage.getItem('auth_token')) {
+              emitAuth();
+              window.clearInterval(timer);
+              return;
+            }
+            if (ticks >= 20) window.clearInterval(timer);
+          }, 500);
         })();
         """,
         injectionTime: .atDocumentStart,
@@ -113,7 +125,7 @@ struct LoginWebView: NSViewRepresentable {
 
             guard url.hasSameOrigin(as: instance.baseURL) else {
                 if navigationAction.targetFrame == nil || navigationAction.navigationType == .linkActivated {
-                    NSWorkspace.shared.open(url)
+                    openExternally(url)
                 }
                 onStatus("已阻止离开登录实例：\(url.host ?? url.absoluteString)")
                 decisionHandler(.cancel)
@@ -132,10 +144,22 @@ struct LoginWebView: NSViewRepresentable {
                 if url.hasSameOrigin(as: instance.baseURL) {
                     webView.load(URLRequest(url: url))
                 } else {
-                    NSWorkspace.shared.open(url)
+                    openExternally(url)
                 }
             }
             return nil
+        }
+
+        /// Only web URLs may be handed to the system handler; anything else
+        /// (file://, smb://, custom app schemes) is dropped.
+        private func openExternally(_ url: URL) {
+            guard let scheme = url.scheme?.lowercased(),
+                  ["http", "https", "mailto"].contains(scheme)
+            else {
+                onStatus("已阻止打开非网页链接：\(url.scheme ?? "未知协议")")
+                return
+            }
+            NSWorkspace.shared.open(url)
         }
 
         func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {

@@ -15,6 +15,7 @@ final class MonitorPoller: ObservableObject {
     private var activeRequestID: UUID?
     private var generation: UInt64 = 0
     private var lastWidgetReloadAt: Date?
+    private var consecutiveFailures = 0
     private let snapshotStore: SnapshotStore
 
     init(snapshotStore: SnapshotStore = .shared) {
@@ -27,6 +28,7 @@ final class MonitorPoller: ObservableObject {
         isRunning = true
         lastError = nil
         nextFetchAt = Date()
+        consecutiveFailures = 0
         let loopGeneration = generation
 
         loopTask = Task { [weak self] in
@@ -35,8 +37,8 @@ final class MonitorPoller: ObservableObject {
                 await self.pollOnce(instance: instance, config: config)
                 guard !Task.isCancelled, self.generation == loopGeneration, self.isRunning else { return }
 
-                let interval = max(config.refreshIntervalSec, 5)
-                self.nextFetchAt = Date().addingTimeInterval(TimeInterval(interval))
+                let interval = self.currentInterval(for: config)
+                self.nextFetchAt = Date().addingTimeInterval(interval)
                 do {
                     try await Task.sleep(nanoseconds: UInt64(interval) * 1_000_000_000)
                 } catch {
@@ -90,7 +92,7 @@ final class MonitorPoller: ObservableObject {
         let client = Sub2APIClient(instance: instance)
         do {
             guard let tokens = try KeychainStore.loadTokens(for: instance) else {
-                handleAuthenticationRequired(instance: instance, reason: Sub2APIError.missingToken.localizedDescription)
+                handleSessionExpired(instance: instance, reason: Sub2APIError.missingToken.localizedDescription)
                 return
             }
 
@@ -114,6 +116,7 @@ final class MonitorPoller: ObservableObject {
             latestSnapshot = snapshot
             lastError = snapshot.staleReason
             nextFetchAt = snapshot.diagnostics.nextFetchAt
+            consecutiveFailures = 0
             if shouldReloadWidget {
                 WidgetCenter.shared.reloadAllTimelines()
             }
@@ -121,28 +124,62 @@ final class MonitorPoller: ObservableObject {
             return
         } catch let error as URLError where error.code == .cancelled {
             return
-        } catch Sub2APIError.unauthorized {
+        } catch let error as Sub2APIError {
             guard isCurrent(requestID: requestID, generation: requestGeneration) else { return }
-            handleAuthenticationRequired(instance: instance, reason: Sub2APIError.unauthorized.localizedDescription)
+            switch error {
+            case .unauthorized, .sessionExpired:
+                // The refresh path inside the client already failed, so the session
+                // is genuinely dead. Stop and ask for a fresh login.
+                handleSessionExpired(instance: instance, reason: error.errorDescription)
+            default:
+                // Transport / server faults are treated as transient: record them and
+                // let the loop retry with backoff instead of destroying credentials.
+                recordFailure(snapshotStore: snapshotStore, instance: instance, config: config, error: error)
+            }
         } catch {
             guard isCurrent(requestID: requestID, generation: requestGeneration) else { return }
-            lastError = error.localizedDescription
-            let snapshot = snapshotWithError(
-                instanceID: instance.id,
-                config: config,
-                message: error.localizedDescription
-            )
-            latestSnapshot = snapshot
-            try? snapshotStore.saveSnapshot(snapshot)
+            recordFailure(snapshotStore: snapshotStore, instance: instance, config: config, error: error)
+        }
+    }
+
+    private func recordFailure(
+        snapshotStore: SnapshotStore,
+        instance: InstanceConfig,
+        config: WidgetDisplayConfig,
+        error: Error
+    ) {
+        consecutiveFailures += 1
+        let message = SafeMessage.sanitize(error)
+        lastError = message
+
+        let snapshot = snapshotWithError(
+            instanceID: instance.id,
+            config: config,
+            message: message
+        )
+        latestSnapshot = snapshot
+        try? snapshotStore.saveSnapshot(snapshot)
+
+        let now = Date()
+        if lastWidgetReloadAt.map({ now.timeIntervalSince($0) >= 15 }) ?? true {
+            lastWidgetReloadAt = now
             WidgetCenter.shared.reloadAllTimelines()
         }
+    }
+
+    /// Backoff for transient failures so a down server is not hammered every 5s.
+    func currentInterval(for config: WidgetDisplayConfig) -> TimeInterval {
+        let base = TimeInterval(max(config.refreshIntervalSec, 5))
+        guard consecutiveFailures > 0 else { return base }
+        let multiplier = min(pow(2.0, Double(min(consecutiveFailures - 1, 5))), 16.0)
+        return min(base * multiplier, 300)
     }
 
     private func isCurrent(requestID: UUID, generation requestGeneration: UInt64) -> Bool {
         !Task.isCancelled && activeRequestID == requestID && generation == requestGeneration
     }
 
-    private func handleAuthenticationRequired(instance: InstanceConfig, reason: String?) {
+    private func handleSessionExpired(instance: InstanceConfig, reason: String?) {
         loopTask?.cancel()
         loopTask = nil
         isRunning = false
@@ -152,7 +189,7 @@ final class MonitorPoller: ObservableObject {
 
         let snapshot = MonitorSnapshot.unavailable(
             instanceID: instance.id,
-            reason: reason ?? "登录已失效"
+            reason: SafeMessage.sanitize(reason ?? "登录已失效")
         )
         latestSnapshot = snapshot
         try? snapshotStore.saveSnapshot(snapshot)

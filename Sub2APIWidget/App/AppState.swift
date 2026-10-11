@@ -9,6 +9,10 @@ final class AppState: ObservableObject {
     @Published var statusMessage = "未连接"
     @Published var showingLogin = false
 
+    /// Last snapshot read from disk. Held in `@Published` state so SwiftUI views can
+    /// read it without performing file IO inside their `body`.
+    @Published private(set) var cachedSnapshot: MonitorSnapshot?
+
     @Published var selectedRefresh: RefreshInterval = .five {
         didSet { schedulePollingRestartIfNeeded() }
     }
@@ -26,8 +30,13 @@ final class AppState: ObservableObject {
 
     func load() {
         instance = snapshotStore.loadInstances().first ?? .production
+        cachedSnapshot = snapshotStore.loadSnapshot(instanceID: instance.id)
         tokens = try? KeychainStore.loadTokens(for: instance)
-        statusMessage = tokens == nil ? "请先登录 Sub2API" : "已读取本地登录凭据"
+        if let notice = snapshotStore.degradationNotice {
+            statusMessage = notice
+        } else {
+            statusMessage = tokens == nil ? "请先登录 Sub2API" : "已读取本地登录凭据"
+        }
         startPollingIfAuthenticated(reason: "自动轮询已启动")
     }
 
@@ -45,6 +54,7 @@ final class AppState: ObservableObject {
             poller.stop()
             KeychainStore.deleteTokens(instanceID: instance.id)
             try? snapshotStore.clearSnapshot(instanceID: instance.id)
+            cachedSnapshot = nil
             tokens = nil
         }
 
@@ -56,6 +66,7 @@ final class AppState: ObservableObject {
                 statusMessage = "实例地址已变更，请重新登录"
                 WidgetCenter.shared.reloadAllTimelines()
             } else {
+                cachedSnapshot = snapshotStore.loadSnapshot(instanceID: instance.id)
                 statusMessage = "实例已保存"
                 schedulePollingRestartIfNeeded()
             }
@@ -81,7 +92,9 @@ final class AppState: ObservableObject {
         poller.stop()
         KeychainStore.deleteTokens(instanceID: instance.id)
         try? snapshotStore.clearSnapshot(instanceID: instance.id)
-        try? snapshotStore.saveSnapshot(.unavailable(instanceID: instance.id, reason: "已退出登录"))
+        let unavailable = MonitorSnapshot.unavailable(instanceID: instance.id, reason: "已退出登录")
+        try? snapshotStore.saveSnapshot(unavailable)
+        cachedSnapshot = unavailable
         tokens = nil
         await WebSessionStore.clearAllData()
         statusMessage = "已退出登录并清除本地会话"
@@ -104,8 +117,9 @@ final class AppState: ObservableObject {
 
     func pollNow() async {
         await poller.pollOnce(instance: instance, config: displayConfig)
+        cachedSnapshot = poller.latestSnapshot ?? cachedSnapshot
         if let error = poller.lastError {
-            statusMessage = error
+            statusMessage = SafeMessage.sanitize(error)
         } else {
             statusMessage = "快照已更新"
         }
@@ -142,6 +156,7 @@ final class AppState: ObservableObject {
 
     private func handleAuthenticationRequired() {
         tokens = nil
-        statusMessage = "登录已失效，请重新登录"
+        cachedSnapshot = nil
+        statusMessage = "登录已失效，轮询已停止，请重新登录"
     }
 }

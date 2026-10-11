@@ -5,9 +5,12 @@ struct ContentView: View {
     @State private var instanceName = AppConstants.defaultInstanceName
     @State private var baseURLText = AppConstants.defaultBaseURL.absoluteString
 
+    /// Resolved once per snapshot change instead of on every `body` evaluation:
+    /// reading the store inside a computed property decoded a 100KB snapshot on
+    /// the main thread (~550ms at 226 accounts) and froze the UI.
     private var snapshot: MonitorSnapshot {
         appState.poller.latestSnapshot
-            ?? SnapshotStore.shared.loadSnapshot(instanceID: appState.instance.id)
+            ?? appState.cachedSnapshot
             ?? .unavailable(instanceID: appState.instance.id)
     }
 
@@ -177,15 +180,22 @@ struct ContentView: View {
                 DiagnosticItem(title: "下次拉取", value: appState.poller.nextFetchAt.map { MetricFormatters.clockTime($0) } ?? MetricFormatters.clockTime(snapshot.diagnostics.nextFetchAt))
                 DiagnosticItem(title: "快照写入", value: MetricFormatters.clockTime(snapshot.diagnostics.lastSnapshotWriteAt))
                 DiagnosticItem(title: "Widget 请求", value: MetricFormatters.clockTime(snapshot.diagnostics.lastWidgetReloadRequestAt))
-                DiagnosticItem(title: "轮询状态", value: appState.poller.isRunning ? "运行中 \(appState.selectedRefresh.displayName)" : "已停止")
+                DiagnosticItem(title: "轮询状态", value: pollStatusText)
             }
             if let error = snapshot.diagnostics.lastError {
-                Text(error)
+                Text(SafeMessage.sanitize(error))
                     .font(.caption)
                     .foregroundStyle(.red)
                     .lineLimit(2)
             }
         }
+    }
+
+    private var pollStatusText: String {
+        if appState.poller.isRunning {
+            return "运行中 \(appState.selectedRefresh.displayName)"
+        }
+        return appState.tokens == nil ? "已停止（未登录）" : "已停止"
     }
 
     private var healthColor: Color {

@@ -1,9 +1,10 @@
 import Foundation
 
-enum Sub2APIError: LocalizedError {
+enum Sub2APIError: LocalizedError, Sendable {
     case invalidResponse
     case apiError(String)
     case unauthorized
+    case sessionExpired(reason: String?)
     case missingToken
     case insecureBaseURL
 
@@ -12,9 +13,31 @@ enum Sub2APIError: LocalizedError {
         case .invalidResponse: "Invalid response from Sub2API"
         case .apiError(let message): message
         case .unauthorized: "Session expired. Please log in again."
+        case .sessionExpired(let reason): reason ?? "Session expired. Please log in again."
         case .missingToken: "Missing access token"
         case .insecureBaseURL: "Refusing to send credentials to an insecure or invalid Base URL"
         }
+    }
+}
+
+/// One monitoring source's result. Failure is carried, not thrown, so a single bad
+/// endpoint degrades the snapshot to `partial` instead of discarding everything.
+struct SourceOutcome<Value: Sendable>: Sendable {
+    var value: Value?
+    var failure: String?
+
+    /// Non-nil only when this source failed because the session is unauthorized.
+    var fatalError: Sub2APIError? {
+        guard failure == Sub2APIError.unauthorized.localizedDescription else { return nil }
+        return .unauthorized
+    }
+}
+
+enum SourceSummary {
+    static func combine(_ failures: [String?]) -> String? {
+        let messages = failures.compactMap { $0 }
+        guard !messages.isEmpty else { return nil }
+        return messages.joined(separator: "；")
     }
 }
 
@@ -55,7 +78,14 @@ actor Sub2APIClient {
             guard let refresh = tokens.refreshToken else {
                 throw Sub2APIError.unauthorized
             }
-            currentTokens = try await refreshToken(refresh)
+            do {
+                currentTokens = try await refreshToken(refresh)
+            } catch let error as Sub2APIError {
+                // A failed refresh means the session is genuinely dead. Flag it so the
+                // poller stops instead of hammering the API, but keep the distinction
+                // from a transient network fault.
+                throw Sub2APIError.sessionExpired(reason: error.errorDescription ?? "登录已失效")
+            }
             try KeychainStore.saveTokens(currentTokens, for: instance)
             return try await fetchSnapshotOnce(tokens: currentTokens, config: config)
         }
@@ -63,29 +93,29 @@ actor Sub2APIClient {
 
     private func fetchSnapshotOnce(tokens: AuthTokenBundle, config: WidgetDisplayConfig) async throws -> MonitorSnapshot {
         let fetchAt = Date()
-        async let concurrencyRequest: ConcurrencyResponseDTO = get(
-            path: "/api/v1/admin/ops/concurrency",
-            query: monitorQuery(config: config, includeTimeRange: false),
-            accessToken: tokens.accessToken
-        )
-        async let availabilityRequest: AvailabilityResponseDTO = get(
-            path: "/api/v1/admin/ops/account-availability",
-            query: monitorQuery(config: config, includeTimeRange: false),
-            accessToken: tokens.accessToken
-        )
-        async let dashboardRequest: DashboardSnapshotDTO = get(
-            path: "/api/v1/admin/ops/dashboard/snapshot-v2",
-            query: monitorQuery(config: config, includeTimeRange: true),
-            accessToken: tokens.accessToken
-        )
-        async let accountsRequest: AccountsPageDTO? = fetchAccounts(accessToken: tokens.accessToken)
 
-        let (concurrency, availability, dashboard, accounts) = try await (
-            concurrencyRequest,
-            availabilityRequest,
-            dashboardRequest,
-            accountsRequest
+        // Fetch the sources concurrently, but settle them independently: a single
+        // failing endpoint must degrade to `partial` instead of voiding the whole
+        // snapshot. Only a 401 is fatal, because it invalidates every source at once.
+        async let concurrencyOutcome: SourceOutcome<ConcurrencyResponseDTO> =
+            fetchSource(path: "/api/v1/admin/ops/concurrency", query: monitorQuery(config: config, includeTimeRange: false), accessToken: tokens.accessToken)
+        async let availabilityOutcome: SourceOutcome<AvailabilityResponseDTO> =
+            fetchSource(path: "/api/v1/admin/ops/account-availability", query: monitorQuery(config: config, includeTimeRange: false), accessToken: tokens.accessToken)
+        async let dashboardOutcome: SourceOutcome<DashboardSnapshotDTO> =
+            fetchSource(path: "/api/v1/admin/ops/dashboard/snapshot-v2", query: monitorQuery(config: config, includeTimeRange: true), accessToken: tokens.accessToken)
+        async let accountsOutcome: SourceOutcome<AccountsPageDTO> =
+            fetchSource(path: "/api/v1/admin/accounts", query: accountsPageQuery, accessToken: tokens.accessToken)
+
+        let (concurrency, availability, dashboard, accounts) = await (
+            concurrencyOutcome, availabilityOutcome, dashboardOutcome, accountsOutcome
         )
+
+        // A 401 on any source means the whole session is dead; anything else is partial.
+        if let fatal = [concurrency.fatalError, availability.fatalError, dashboard.fatalError, accounts.fatalError]
+            .compactMap({ $0 })
+            .first {
+            throw fatal
+        }
 
         let diagnostics = RefreshDiagnostics(
             lastFetchAt: fetchAt,
@@ -93,15 +123,17 @@ actor Sub2APIClient {
             lastSnapshotWriteAt: nil,
             lastWidgetReloadRequestAt: nil,
             lastWidgetRenderAt: nil,
-            lastError: nil
+            lastError: SourceSummary.combine([
+                concurrency.failure, availability.failure, dashboard.failure, accounts.failure
+            ])
         )
 
         return SnapshotBuilder.build(
             instanceID: instance.id,
-            concurrency: concurrency,
-            availability: availability,
-            dashboard: dashboard,
-            accounts: accounts,
+            concurrency: concurrency.value,
+            availability: availability.value,
+            dashboard: dashboard.value,
+            accounts: accounts.value,
             authState: AuthState(isAuthenticated: true, userEmail: tokens.userEmail, tokenExpiresAt: tokens.expiresAt),
             refreshInterval: config.refreshIntervalSec,
             diagnostics: diagnostics,
@@ -109,36 +141,34 @@ actor Sub2APIClient {
         )
     }
 
+    private var accountsPageQuery: [URLQueryItem] {
+        [
+            URLQueryItem(name: "page", value: "1"),
+            URLQueryItem(name: "page_size", value: "1000"),
+            URLQueryItem(name: "include_scheduler_score", value: "0")
+        ]
+    }
+
+    /// Runs one source request, converting failure into a value rather than a throw.
+    private func fetchSource<T: Decodable>(path: String, query: [URLQueryItem], accessToken: String) async -> SourceOutcome<T> {
+        do {
+            return SourceOutcome(value: try await get(path: path, query: query, accessToken: accessToken), failure: nil)
+        } catch {
+            return SourceOutcome(value: nil, failure: SafeMessage.sanitize(error))
+        }
+    }
+
     func healthCheck() async throws -> Bool {
-        let url = instance.baseURL.appendingPathComponent("health")
-        let (_, response) = try await session.data(from: url)
+        guard instance.baseURL.isAllowedSub2APIBaseURL else {
+            throw Sub2APIError.insecureBaseURL
+        }
+        var request = URLRequest(url: instance.baseURL.appendingPathComponent("health"))
+        request.timeoutInterval = 20
+        let (_, response) = try await session.data(for: request)
         guard let http = response as? HTTPURLResponse else {
             throw Sub2APIError.invalidResponse
         }
         return (200..<300).contains(http.statusCode)
-    }
-
-    private func fetchAccounts(accessToken: String) async -> AccountsPageDTO? {
-        let cacheKey = "\(instance.id):\(instance.baseURL.normalizedOrigin ?? instance.baseURL.absoluteString)"
-        if let cached = await AccountListCache.shared.value(for: cacheKey, maxAge: 30) {
-            return cached
-        }
-
-        do {
-            let page: AccountsPageDTO = try await get(
-                path: "/api/v1/admin/accounts",
-                query: [
-                    URLQueryItem(name: "page", value: "1"),
-                    URLQueryItem(name: "page_size", value: "1000"),
-                    URLQueryItem(name: "include_scheduler_score", value: "0")
-                ],
-                accessToken: accessToken
-            )
-            await AccountListCache.shared.store(page, for: cacheKey)
-            return page
-        } catch {
-            return nil
-        }
     }
 
     private func monitorQuery(config: WidgetDisplayConfig, includeTimeRange: Bool) -> [URLQueryItem] {
@@ -196,15 +226,18 @@ actor Sub2APIClient {
         }
         guard (200..<300).contains(http.statusCode) else {
             let errorEnvelope = try? JSONDecoder.sub2api.decode(APIErrorEnvelope.self, from: data)
-            throw Sub2APIError.apiError(errorEnvelope?.message ?? "HTTP \(http.statusCode)")
+            // Scrubbed at the source: this message is surfaced on the desktop
+            // widget, and servers can echo request context into it.
+            let message = SafeMessage.sanitize(errorEnvelope?.message ?? "HTTP \(http.statusCode)")
+            throw Sub2APIError.apiError(message)
         }
 
         let envelope = try JSONDecoder.sub2api.decode(APIEnvelope<T>.self, from: data)
         if let code = envelope.code, code != 0 {
-            throw Sub2APIError.apiError(envelope.message ?? "Sub2API error \(code)")
+            throw Sub2APIError.apiError(SafeMessage.sanitize(envelope.message ?? "Sub2API error \(code)"))
         }
         guard let payload = envelope.data else {
-            throw Sub2APIError.apiError(envelope.message ?? "Sub2API response did not include data")
+            throw Sub2APIError.apiError(SafeMessage.sanitize(envelope.message ?? "Sub2API response did not include data"))
         }
         return payload
     }
@@ -213,27 +246,4 @@ actor Sub2APIClient {
 private struct APIErrorEnvelope: Decodable {
     var code: Int?
     var message: String?
-}
-
-private actor AccountListCache {
-    static let shared = AccountListCache()
-
-    private struct Entry: Sendable {
-        var storedAt: Date
-        var page: AccountsPageDTO
-    }
-
-    private var entries: [String: Entry] = [:]
-
-    func value(for key: String, maxAge: TimeInterval) -> AccountsPageDTO? {
-        guard let entry = entries[key], Date().timeIntervalSince(entry.storedAt) <= maxAge else {
-            entries.removeValue(forKey: key)
-            return nil
-        }
-        return entry.page
-    }
-
-    func store(_ page: AccountsPageDTO, for key: String) {
-        entries[key] = Entry(storedAt: Date(), page: page)
-    }
 }

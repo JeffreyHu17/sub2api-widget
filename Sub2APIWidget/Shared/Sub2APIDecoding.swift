@@ -300,11 +300,22 @@ extension JSONDecoder {
         let decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .custom { decoder in
             let container = try decoder.singleValueContainer()
-            let string = try container.decode(String.self)
-            if let date = DateParsers.parseSub2APIDate(string) {
+            // Some servers send epoch seconds/milliseconds as a JSON number rather
+            // than an ISO8601 string, so accept both shapes before giving up.
+            var text: String? = try? container.decode(String.self)
+            if text == nil, let number = try? container.decode(Double.self) {
+                text = String(number)
+            }
+            guard let value = text else { return Date.distantPast }
+            if let date = DateParsers.parseSub2APIDate(value) {
                 return date
             }
-            throw DecodingError.dataCorruptedError(in: container, debugDescription: "Invalid date: \(string)")
+            if let epoch = TimeInterval(value), epoch.isFinite {
+                return Date(timeIntervalSince1970: epoch > 1_000_000_000_000 ? epoch / 1000 : epoch)
+            }
+            // Degrade a malformed date instead of throwing: throwing here would fail
+            // the decode of the ENTIRE snapshot, hiding all other valid metrics.
+            return Date.distantPast
         }
         return decoder
     }
@@ -313,22 +324,63 @@ extension JSONDecoder {
 extension JSONEncoder {
     static var sub2api: JSONEncoder {
         let encoder = JSONEncoder()
-        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+        // prettyPrinted inflated snapshots ~47% for no benefit: these files are
+        // machine-written and rewritten every poll cycle.
+        encoder.outputFormatting = [.sortedKeys]
         encoder.dateEncodingStrategy = .iso8601
         return encoder
     }
 }
 
 enum DateParsers {
+    // Building an ISO8601DateFormatter costs ~326us (measured), so per-parse
+    // allocation dominated decoding. These caches are guarded by `lock` because
+    // Swift 6 concurrency checking rejects a non-Sendable global; ISO8601DateFormatter
+    // has no thread-safety guarantee, hence the lock rather than an unchecked static.
+    private static let lock = NSLock()
+    nonisolated(unsafe) private static var fractionalCache: ISO8601DateFormatter?
+    nonisolated(unsafe) private static var plainCache: ISO8601DateFormatter?
+    nonisolated(unsafe) private static var spaceSeparatedCache: DateFormatter?
+
+    private static var fractional: ISO8601DateFormatter {
+        lock.lock()
+        defer { lock.unlock() }
+        if let fractionalCache { return fractionalCache }
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        fractionalCache = formatter
+        return formatter
+    }
+
+    private static var plain: ISO8601DateFormatter {
+        lock.lock()
+        defer { lock.unlock() }
+        if let plainCache { return plainCache }
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime]
+        plainCache = formatter
+        return formatter
+    }
+
+    private static var spaceSeparated: DateFormatter {
+        lock.lock()
+        defer { lock.unlock() }
+        if let spaceSeparatedCache { return spaceSeparatedCache }
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = TimeZone(secondsFromGMT: 0)
+        formatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
+        spaceSeparatedCache = formatter
+        return formatter
+    }
+
     static func parseSub2APIDate(_ string: String) -> Date? {
-        let withFractional = ISO8601DateFormatter()
-        withFractional.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        if let date = withFractional.date(from: string) {
+        if let date = fractional.date(from: string) {
             return date
         }
-
-        let plain = ISO8601DateFormatter()
-        plain.formatOptions = [.withInternetDateTime]
-        return plain.date(from: string)
+        if let date = plain.date(from: string) {
+            return date
+        }
+        return spaceSeparated.date(from: string)
     }
 }

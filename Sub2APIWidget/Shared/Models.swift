@@ -5,7 +5,35 @@ struct InstanceConfig: Codable, Identifiable, Hashable {
     var name: String
     var baseURL: URL
     var dashboardPath: String
+    /// Tolerated as absent on decode: losing this non-essential field previously
+    /// failed the whole instances.json decode and silently reverted the user to
+    /// the default production instance. A memberwise default alone is not enough
+    /// because Codable's synthesized `init(from:)` ignores defaults, so this is
+    /// written out explicitly.
     var createdAt: Date
+
+    init(
+        id: String,
+        name: String,
+        baseURL: URL,
+        dashboardPath: String,
+        createdAt: Date = Date()
+    ) {
+        self.id = id
+        self.name = name
+        self.baseURL = baseURL
+        self.dashboardPath = dashboardPath
+        self.createdAt = createdAt
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(String.self, forKey: .id)
+        name = try container.decode(String.self, forKey: .name)
+        baseURL = try container.decode(URL.self, forKey: .baseURL)
+        dashboardPath = try container.decode(String.self, forKey: .dashboardPath)
+        createdAt = try container.decodeIfPresent(Date.self, forKey: .createdAt) ?? Date()
+    }
 
     static let production = InstanceConfig(
         id: AppConstants.defaultInstanceID,
@@ -26,6 +54,15 @@ struct WidgetDisplayConfig: Codable, Identifiable, Hashable {
     var maxAccounts: Int
     var accountID: Int64? = nil
     var accountIDs: [Int64]? = nil
+
+    /// Single source of truth for which accounts a widget displays: `accountIDs`
+    /// when the user picked several, otherwise the legacy single `accountID`.
+    /// Empty means "auto-select schedulable accounts".
+    var selectedAccountIDs: [Int64] {
+        if let accountIDs, !accountIDs.isEmpty { return accountIDs }
+        if let accountID { return [accountID] }
+        return []
+    }
 
     static let defaultActivity = WidgetDisplayConfig(
         id: "default-activity",
@@ -71,6 +108,12 @@ struct MonitorSnapshot: Codable, Identifiable {
         dataState != .available || staleReason != nil || expiresAt < date
     }
 
+    /// Fabricated sample data for the WidgetKit gallery preview ONLY.
+    ///
+    /// Never return this from a real render path: a monitoring tool displaying
+    /// invented figures (e.g. "226 openai accounts, health 92") destroys user
+    /// trust. `Sub2APIProvider.placeholder(in:)` is the only sanctioned caller —
+    /// real paths must use `unavailable(instanceID:reason:)`.
     static func placeholder(instanceID: String = AppConstants.defaultInstanceID) -> MonitorSnapshot {
         MonitorSnapshot(
             instanceID: instanceID,

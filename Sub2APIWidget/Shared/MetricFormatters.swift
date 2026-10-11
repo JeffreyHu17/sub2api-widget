@@ -1,17 +1,32 @@
 import Foundation
 
+extension Date {
+    /// Sentinel used by the tolerant date decoder for values it could not parse.
+    /// Anything at or before year 1 means "unknown", never a real timestamp.
+    var isUnknownTimestamp: Bool {
+        timeIntervalSince1970 <= -62_000_000_000
+    }
+}
+
 enum MetricFormatters {
-    static func percent(_ value: Double, digits: Int = 1) -> String {
+    private static let percentFormatter: NumberFormatter = makeFormatter(maxDigits: 1)
+    private static let preciseFormatter: NumberFormatter = makeFormatter(maxDigits: 2)
+    private static let singleDigitFormatter: NumberFormatter = makeFormatter(maxDigits: 1)
+
+    private static func makeFormatter(maxDigits: Int) -> NumberFormatter {
         let formatter = NumberFormatter()
         formatter.minimumFractionDigits = 0
-        formatter.maximumFractionDigits = digits
+        formatter.maximumFractionDigits = maxDigits
+        return formatter
+    }
+
+    static func percent(_ value: Double, digits: Int = 1) -> String {
+        let formatter = digits >= 2 ? preciseFormatter : percentFormatter
         return "\(formatter.string(from: NSNumber(value: value)) ?? "0")%"
     }
 
     static func decimal(_ value: Double, digits: Int = 1) -> String {
-        let formatter = NumberFormatter()
-        formatter.minimumFractionDigits = 0
-        formatter.maximumFractionDigits = digits
+        let formatter = digits >= 2 ? preciseFormatter : singleDigitFormatter
         return formatter.string(from: NSNumber(value: value)) ?? "0"
     }
 
@@ -40,7 +55,7 @@ enum MetricFormatters {
     }
 
     static func clockTime(_ date: Date?) -> String {
-        guard let date else { return "--:--:--" }
+        guard let date, !date.isUnknownTimestamp else { return "--:--:--" }
         return date.formatted(
             .dateTime
                 .hour(.twoDigits(amPM: .omitted))
@@ -50,7 +65,7 @@ enum MetricFormatters {
     }
 
     static func relativeTime(_ date: Date?) -> String {
-        guard let date else { return "--" }
+        guard let date, !date.isUnknownTimestamp else { return "--" }
         let seconds = Int(Date().timeIntervalSince(date))
         if seconds < 60 { return clockTime(date) }
         let minutes = seconds / 60
