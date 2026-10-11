@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - main
+  pull_request:
+    branches:
+      - main
 
 permissions:
   contents: read
@@ -117,6 +120,20 @@ jobs:
       - name: Run core tests
         working-directory: .
         run: swift test
+
+      - name: Build app and widget targets
+        # The SPM package covers Shared/ only. Without this step the App and
+        # WidgetExtension targets — where the view, WebView and WidgetKit code
+        # lives — would never be compiled until a release archive.
+        run: |
+          xcodebuild \
+            -project Sub2APIWidget.xcodeproj \
+            -scheme Sub2APIWidget \
+            -configuration Debug \
+            -destination 'platform=macOS' \
+            -derivedDataPath "$RUNNER_TEMP/DerivedData" \
+            CODE_SIGNING_ALLOWED=NO \
+            build
 
       - name: Build signed ARM64 archive
         run: |
