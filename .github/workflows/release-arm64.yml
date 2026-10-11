@@ -36,6 +36,37 @@ jobs:
             echo "should_release=false" >> "$GITHUB_OUTPUT"
           fi
 
+  verify:
+    name: Verify build
+    # Runs on every push and pull request, unconditionally. This must NOT depend
+    # on detect-version: guarding these steps behind the release condition meant a
+    # green check that had verified nothing at all.
+    runs-on: macos-15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run core tests
+        # swift test only covers the SPM package. Every Shared source file is now
+        # part of that target, including Poller, Sub2APIClient and KeychainStore.
+        working-directory: .
+        run: swift test
+
+      - name: Build app and widget targets
+        # The SPM package cannot see the App and WidgetExtension targets, where
+        # the SwiftUI views, WKWebView login and WidgetKit code live. Without this
+        # step nothing compiles them until a release archive is cut.
+        working-directory: Sub2APIWidget
+        run: |
+          xcodebuild \
+            -project Sub2APIWidget.xcodeproj \
+            -scheme Sub2APIWidget \
+            -configuration Debug \
+            -destination 'platform=macOS' \
+            -derivedDataPath "$RUNNER_TEMP/DerivedData" \
+            CODE_SIGNING_ALLOWED=NO \
+            build
+
   build-release:
     name: Sign, notarize and publish ${{ needs.detect-version.outputs.version }}
     needs: detect-version
@@ -116,24 +147,6 @@ jobs:
 
           install_profile "$APP_PROVISION_PROFILE_BASE64" app
           install_profile "$WIDGET_PROVISION_PROFILE_BASE64" widget
-
-      - name: Run core tests
-        working-directory: .
-        run: swift test
-
-      - name: Build app and widget targets
-        # The SPM package covers Shared/ only. Without this step the App and
-        # WidgetExtension targets — where the view, WebView and WidgetKit code
-        # lives — would never be compiled until a release archive.
-        run: |
-          xcodebuild \
-            -project Sub2APIWidget.xcodeproj \
-            -scheme Sub2APIWidget \
-            -configuration Debug \
-            -destination 'platform=macOS' \
-            -derivedDataPath "$RUNNER_TEMP/DerivedData" \
-            CODE_SIGNING_ALLOWED=NO \
-            build
 
       - name: Build signed ARM64 archive
         run: |
