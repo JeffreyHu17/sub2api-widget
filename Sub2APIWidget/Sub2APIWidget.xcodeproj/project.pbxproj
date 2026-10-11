@@ -37,18 +37,18 @@
 		500000000000000000000133 /* Sub2APIDecoding.swift in Sources */ = {isa = PBXBuildFile; fileRef = 500000000000000000000023 /* Sub2APIDecoding.swift */; };
 		500000000000000000000134 /* SnapshotBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 500000000000000000000024 /* SnapshotBuilder.swift */; };
 		500000000000000000000135 /* SnapshotStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 500000000000000000000025 /* SnapshotStore.swift */; };
-		500000000000000000000136 /* KeychainStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 500000000000000000000026 /* KeychainStore.swift */; };
-		500000000000000000000137 /* Sub2APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 500000000000000000000027 /* Sub2APIClient.swift */; };
-		500000000000000000000138 /* Poller.swift in Sources */ = {isa = PBXBuildFile; fileRef = 500000000000000000000028 /* Poller.swift */; };
 		500000000000000000000139 /* AppIntents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 500000000000000000000029 /* AppIntents.swift */; };
 		50000000000000000000013A /* URLRouting.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50000000000000000000002A /* URLRouting.swift */; };
 		50000000000000000000013B /* MetricFormatters.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50000000000000000000002B /* MetricFormatters.swift */; };
+		50000000000000000000013C /* SafeMessage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50000000000000000000002C /* SafeMessage.swift */; };
+		50000000000000000000013D /* SafeMessage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50000000000000000000002C /* SafeMessage.swift */; };
 		500000000000000000000151 /* Sub2APIWidgetBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 500000000000000000000031 /* Sub2APIWidgetBundle.swift */; };
 		500000000000000000000152 /* Sub2APIStatusWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 500000000000000000000032 /* Sub2APIStatusWidget.swift */; };
 		500000000000000000000153 /* PlatformActivityWidgetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 500000000000000000000033 /* PlatformActivityWidgetView.swift */; };
 		500000000000000000000154 /* ServerHealthWidgetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 500000000000000000000034 /* ServerHealthWidgetView.swift */; };
 		500000000000000000000155 /* WidgetComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 500000000000000000000035 /* WidgetComponents.swift */; };
 		500000000000000000000156 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 500000000000000000000036 /* Assets.xcassets */; };
+		500000000000000000000157 /* AccountMonitorWidgetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 500000000000000000000039 /* AccountMonitorWidgetView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -95,6 +95,7 @@
 		500000000000000000000029 /* AppIntents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppIntents.swift; sourceTree = "<group>"; };
 		50000000000000000000002A /* URLRouting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = URLRouting.swift; sourceTree = "<group>"; };
 		50000000000000000000002B /* MetricFormatters.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MetricFormatters.swift; sourceTree = "<group>"; };
+		50000000000000000000002C /* SafeMessage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SafeMessage.swift; sourceTree = "<group>"; };
 		500000000000000000000031 /* Sub2APIWidgetBundle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sub2APIWidgetBundle.swift; sourceTree = "<group>"; };
 		500000000000000000000032 /* Sub2APIStatusWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sub2APIStatusWidget.swift; sourceTree = "<group>"; };
 		500000000000000000000033 /* PlatformActivityWidgetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlatformActivityWidgetView.swift; sourceTree = "<group>"; };
@@ -103,6 +104,7 @@
 		500000000000000000000036 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		500000000000000000000037 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		500000000000000000000038 /* Sub2APIWidgetExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Sub2APIWidgetExtension.entitlements; sourceTree = "<group>"; };
+		500000000000000000000039 /* AccountMonitorWidgetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountMonitorWidgetView.swift; sourceTree = "<group>"; };
 		500000000000000000000040 /* Sub2APIWidget.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Sub2APIWidget.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		500000000000000000000041 /* Sub2APIWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = Sub2APIWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		500000000000000000000071 /* WebKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WebKit.framework; path = System/Library/Frameworks/WebKit.framework; sourceTree = SDKROOT; };
@@ -184,6 +186,7 @@
 				500000000000000000000029 /* AppIntents.swift */,
 				50000000000000000000002A /* URLRouting.swift */,
 				50000000000000000000002B /* MetricFormatters.swift */,
+				50000000000000000000002C /* SafeMessage.swift */,
 			);
 			path = Shared;
 			sourceTree = "<group>";
@@ -196,6 +199,7 @@
 				500000000000000000000033 /* PlatformActivityWidgetView.swift */,
 				500000000000000000000034 /* ServerHealthWidgetView.swift */,
 				500000000000000000000035 /* WidgetComponents.swift */,
+				500000000000000000000039 /* AccountMonitorWidgetView.swift */,
 				500000000000000000000037 /* Info.plist */,
 				500000000000000000000038 /* Sub2APIWidgetExtension.entitlements */,
 				500000000000000000000036 /* Assets.xcassets */,
@@ -339,6 +343,7 @@
 				500000000000000000000129 /* AppIntents.swift in Sources */,
 				50000000000000000000012A /* URLRouting.swift in Sources */,
 				50000000000000000000012B /* MetricFormatters.swift in Sources */,
+				50000000000000000000013C /* SafeMessage.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -351,17 +356,16 @@
 				500000000000000000000153 /* PlatformActivityWidgetView.swift in Sources */,
 				500000000000000000000154 /* ServerHealthWidgetView.swift in Sources */,
 				500000000000000000000155 /* WidgetComponents.swift in Sources */,
+				500000000000000000000157 /* AccountMonitorWidgetView.swift in Sources */,
 				500000000000000000000131 /* Constants.swift in Sources */,
 				500000000000000000000132 /* Models.swift in Sources */,
 				500000000000000000000133 /* Sub2APIDecoding.swift in Sources */,
 				500000000000000000000134 /* SnapshotBuilder.swift in Sources */,
 				500000000000000000000135 /* SnapshotStore.swift in Sources */,
-				500000000000000000000136 /* KeychainStore.swift in Sources */,
-				500000000000000000000137 /* Sub2APIClient.swift in Sources */,
-				500000000000000000000138 /* Poller.swift in Sources */,
 				500000000000000000000139 /* AppIntents.swift in Sources */,
 				50000000000000000000013A /* URLRouting.swift in Sources */,
 				50000000000000000000013B /* MetricFormatters.swift in Sources */,
+				50000000000000000000013D /* SafeMessage.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -519,12 +523,13 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = App/Sub2APIWidget.entitlements;
-				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
-				CODE_SIGN_STYLE = Automatic;
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Developer ID Application";
+				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"App/Preview Content\"";
 				ENABLE_PREVIEWS = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = App/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -535,6 +540,7 @@
 				MARKETING_VERSION = 0.1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = top.jeffreyhjh.Sub2APIWidget;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "$(APP_PROVISIONING_PROFILE_SPECIFIER)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 6.0;
 			};
@@ -575,9 +581,10 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
 				CODE_SIGN_ENTITLEMENTS = Widget/Sub2APIWidgetExtension.entitlements;
-				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
-				CODE_SIGN_STYLE = Automatic;
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Developer ID Application";
+				CODE_SIGN_STYLE = Manual;
 				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = Widget/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -589,6 +596,7 @@
 				MARKETING_VERSION = 0.1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = top.jeffreyhjh.Sub2APIWidget.WidgetExtension;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "$(WIDGET_PROVISIONING_PROFILE_SPECIFIER)";
 				REGISTER_APP_GROUPS = YES;
 				SKIP_INSTALL = YES;
 				SWIFT_EMIT_LOC_STRINGS = YES;

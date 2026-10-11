@@ -3,10 +3,13 @@ name: Release macOS ARM64
 on:
   push:
     branches:
-      - "**"
+      - main
+  pull_request:
+    branches:
+      - main
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   detect-version:
@@ -14,43 +17,138 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.detect.outputs.version }}
+      marketing_version: ${{ steps.detect.outputs.marketing_version }}
       should_release: ${{ steps.detect.outputs.should_release }}
     steps:
-      - name: Detect Vx.x.x in commit message
+      - name: Detect Vx.x.x in head commit
         id: detect
         shell: bash
         run: |
-          version="$(
-            jq -r '[.head_commit.message, (.commits[]?.message)] | map(select(. != null)) | join("\n")' "$GITHUB_EVENT_PATH" \
-              | grep -Eo 'V[0-9]+\.[0-9]+\.[0-9]+' \
-              | head -n 1 || true
-          )"
+          message="$(jq -r '.head_commit.message // ""' "$GITHUB_EVENT_PATH")"
+          version="$(printf '%s\n' "$message" | grep -Eo 'V[0-9]+\.[0-9]+\.[0-9]+' | head -n 1 || true)"
           if [ -n "$version" ]; then
             echo "version=$version" >> "$GITHUB_OUTPUT"
+            echo "marketing_version=${version#V}" >> "$GITHUB_OUTPUT"
             echo "should_release=true" >> "$GITHUB_OUTPUT"
           else
             echo "version=" >> "$GITHUB_OUTPUT"
+            echo "marketing_version=" >> "$GITHUB_OUTPUT"
             echo "should_release=false" >> "$GITHUB_OUTPUT"
           fi
 
-  build-release:
-    name: Build and publish ${{ needs.detect-version.outputs.version }}
-    needs: detect-version
-    if: needs.detect-version.outputs.should_release == 'true'
+  verify:
+    name: Verify build
+    # Runs on every push and pull request, unconditionally. This must NOT depend
+    # on detect-version: guarding these steps behind the release condition meant a
+    # green check that had verified nothing at all.
     runs-on: macos-15
-    defaults:
-      run:
-        working-directory: Sub2APIWidget
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Run core tests
+        # swift test only covers the SPM package. Every Shared source file is now
+        # part of that target, including Poller, Sub2APIClient and KeychainStore.
+        working-directory: .
+        run: swift test
+
+      - name: Build app and widget targets
+        # The SPM package cannot see the App and WidgetExtension targets, where
+        # the SwiftUI views, WKWebView login and WidgetKit code live. Without this
+        # step nothing compiles them until a release archive is cut.
+        working-directory: Sub2APIWidget
+        run: |
+          xcodebuild \
+            -project Sub2APIWidget.xcodeproj \
+            -scheme Sub2APIWidget \
+            -configuration Debug \
+            -destination 'platform=macOS' \
+            -derivedDataPath "$RUNNER_TEMP/DerivedData" \
+            CODE_SIGNING_ALLOWED=NO \
+            build
+
+  build-release:
+    name: Sign, notarize and publish ${{ needs.detect-version.outputs.version }}
+    needs: detect-version
+    if: needs.detect-version.outputs.should_release == 'true'
+    runs-on: macos-15
+    permissions:
+      contents: write
+    defaults:
+      run:
+        working-directory: Sub2APIWidget
+    env:
+      VERSION: ${{ needs.detect-version.outputs.version }}
+      MARKETING_VERSION: ${{ needs.detect-version.outputs.marketing_version }}
+      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+      BUILD_CERTIFICATE_BASE64: ${{ secrets.BUILD_CERTIFICATE_BASE64 }}
+      P12_PASSWORD: ${{ secrets.P12_PASSWORD }}
+      KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+      APP_PROVISION_PROFILE_BASE64: ${{ secrets.APP_PROVISION_PROFILE_BASE64 }}
+      WIDGET_PROVISION_PROFILE_BASE64: ${{ secrets.WIDGET_PROVISION_PROFILE_BASE64 }}
+      APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
+      APPLE_API_ISSUER_ID: ${{ secrets.APPLE_API_ISSUER_ID }}
+      APPLE_API_KEY_P8_BASE64: ${{ secrets.APPLE_API_KEY_P8_BASE64 }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Reject duplicate release
+        run: |
+          if git rev-parse "$VERSION" >/dev/null 2>&1; then
+            echo "Release tag $VERSION already exists"
+            exit 1
+          fi
+
+      - name: Validate signing secrets
+        run: |
+          for name in APPLE_TEAM_ID BUILD_CERTIFICATE_BASE64 P12_PASSWORD KEYCHAIN_PASSWORD APP_PROVISION_PROFILE_BASE64 WIDGET_PROVISION_PROFILE_BASE64 APPLE_API_KEY_ID APPLE_API_ISSUER_ID APPLE_API_KEY_P8_BASE64; do
+            if [ -z "${!name}" ]; then
+              echo "Missing required GitHub secret: $name"
+              exit 1
+            fi
+          done
 
       - name: Select Xcode
         run: |
           sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
           xcodebuild -version
 
-      - name: Build unsigned ARM64 archive
+      - name: Install signing certificate and profiles
+        id: signing
+        run: |
+          certificate="$RUNNER_TEMP/developer-id.p12"
+          keychain="$RUNNER_TEMP/release-signing.keychain-db"
+          printf '%s' "$BUILD_CERTIFICATE_BASE64" | base64 -D > "$certificate"
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$keychain"
+          security set-keychain-settings -lut 21600 "$keychain"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$keychain"
+          security import "$certificate" -P "$P12_PASSWORD" -A -t cert -f pkcs12 -k "$keychain"
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" "$keychain"
+          security list-keychains -d user -s "$keychain" login.keychain-db
+
+          profile_dir="$HOME/Library/MobileDevice/Provisioning Profiles"
+          mkdir -p "$profile_dir"
+
+          install_profile() {
+            encoded="$1"
+            prefix="$2"
+            profile="$RUNNER_TEMP/$prefix.provisionprofile"
+            plist="$RUNNER_TEMP/$prefix.plist"
+            printf '%s' "$encoded" | base64 -D > "$profile"
+            security cms -D -i "$profile" -o "$plist"
+            uuid="$(/usr/libexec/PlistBuddy -c 'Print :UUID' "$plist")"
+            name="$(/usr/libexec/PlistBuddy -c 'Print :Name' "$plist")"
+            cp "$profile" "$profile_dir/$uuid.provisionprofile"
+            echo "${prefix}_profile=$name" >> "$GITHUB_OUTPUT"
+          }
+
+          install_profile "$APP_PROVISION_PROFILE_BASE64" app
+          install_profile "$WIDGET_PROVISION_PROFILE_BASE64" widget
+
+      - name: Build signed ARM64 archive
         run: |
           xcodebuild \
             -project Sub2APIWidget.xcodeproj \
@@ -61,29 +159,58 @@ jobs:
             -derivedDataPath "$RUNNER_TEMP/Sub2APIWidget-DerivedData" \
             ARCHS=arm64 \
             ONLY_ACTIVE_ARCH=NO \
-            CODE_SIGNING_ALLOWED=NO \
-            CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGN_IDENTITY="" \
+            DEVELOPMENT_TEAM="$APPLE_TEAM_ID" \
+            APPLE_TEAM_ID="$APPLE_TEAM_ID" \
+            APP_PROVISIONING_PROFILE_SPECIFIER="${{ steps.signing.outputs.app_profile }}" \
+            WIDGET_PROVISIONING_PROFILE_SPECIFIER="${{ steps.signing.outputs.widget_profile }}" \
+            MARKETING_VERSION="$MARKETING_VERSION" \
+            CURRENT_PROJECT_VERSION="$GITHUB_RUN_NUMBER" \
             archive
+
+      - name: Verify signing and entitlements
+        run: |
+          app="$RUNNER_TEMP/Sub2APIWidget.xcarchive/Products/Applications/Sub2APIWidget.app"
+          extension="$app/Contents/PlugIns/Sub2APIWidgetExtension.appex"
+          codesign --verify --deep --strict --verbose=2 "$app"
+          codesign --verify --strict --verbose=2 "$extension"
+          codesign -d --entitlements :- "$app" > "$RUNNER_TEMP/app-entitlements.plist"
+          codesign -d --entitlements :- "$extension" > "$RUNNER_TEMP/widget-entitlements.plist"
+          /usr/libexec/PlistBuddy -c 'Print :com.apple.security.application-groups:0' "$RUNNER_TEMP/app-entitlements.plist" | grep -Fx 'group.top.jeffreyhjh.Sub2APIWidget'
+          /usr/libexec/PlistBuddy -c 'Print :com.apple.security.application-groups:0' "$RUNNER_TEMP/widget-entitlements.plist" | grep -Fx 'group.top.jeffreyhjh.Sub2APIWidget'
+
+      - name: Notarize and staple
+        run: |
+          app="$RUNNER_TEMP/Sub2APIWidget.xcarchive/Products/Applications/Sub2APIWidget.app"
+          submission="$RUNNER_TEMP/Sub2APIWidget-notarization.zip"
+          api_key="$RUNNER_TEMP/AuthKey_$APPLE_API_KEY_ID.p8"
+          printf '%s' "$APPLE_API_KEY_P8_BASE64" | base64 -D > "$api_key"
+          ditto -c -k --keepParent "$app" "$submission"
+          xcrun notarytool submit "$submission" \
+            --key "$api_key" \
+            --key-id "$APPLE_API_KEY_ID" \
+            --issuer "$APPLE_API_ISSUER_ID" \
+            --wait
+          xcrun stapler staple "$app"
+          xcrun stapler validate "$app"
+          spctl --assess --type execute --verbose=2 "$app"
 
       - name: Package app
         run: |
-          mkdir -p "$RUNNER_TEMP/package"
-          ditto "$RUNNER_TEMP/Sub2APIWidget.xcarchive/Products/Applications/Sub2APIWidget.app" "$RUNNER_TEMP/package/Sub2APIWidget.app"
-          ditto -c -k --sequesterRsrc --keepParent "$RUNNER_TEMP/package/Sub2APIWidget.app" "$RUNNER_TEMP/Sub2APIWidget-${{ needs.detect-version.outputs.version }}-macos-arm64.zip"
+          app="$RUNNER_TEMP/Sub2APIWidget.xcarchive/Products/Applications/Sub2APIWidget.app"
+          asset="$RUNNER_TEMP/Sub2APIWidget-$VERSION-macos-arm64.zip"
+          ditto -c -k --sequesterRsrc --keepParent "$app" "$asset"
+          echo "ASSET=$asset" >> "$GITHUB_ENV"
 
       - name: Publish GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
-          VERSION: ${{ needs.detect-version.outputs.version }}
-          ASSET: ${{ runner.temp }}/Sub2APIWidget-${{ needs.detect-version.outputs.version }}-macos-arm64.zip
         run: |
           if gh release view "$VERSION" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-            gh release upload "$VERSION" "$ASSET" --repo "$GITHUB_REPOSITORY" --clobber
-          else
-            gh release create "$VERSION" "$ASSET" \
-              --repo "$GITHUB_REPOSITORY" \
-              --target "$GITHUB_SHA" \
-              --title "Sub2API Widget $VERSION" \
-              --generate-notes
+            echo "Release $VERSION already exists"
+            exit 1
           fi
+          gh release create "$VERSION" "$ASSET" \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$GITHUB_SHA" \
+            --title "Sub2API Widget $VERSION" \
+            --generate-notes

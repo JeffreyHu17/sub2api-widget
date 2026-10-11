@@ -5,7 +5,35 @@ struct InstanceConfig: Codable, Identifiable, Hashable {
     var name: String
     var baseURL: URL
     var dashboardPath: String
+    /// Tolerated as absent on decode: losing this non-essential field previously
+    /// failed the whole instances.json decode and silently reverted the user to
+    /// the default production instance. A memberwise default alone is not enough
+    /// because Codable's synthesized `init(from:)` ignores defaults, so this is
+    /// written out explicitly.
     var createdAt: Date
+
+    init(
+        id: String,
+        name: String,
+        baseURL: URL,
+        dashboardPath: String,
+        createdAt: Date = Date()
+    ) {
+        self.id = id
+        self.name = name
+        self.baseURL = baseURL
+        self.dashboardPath = dashboardPath
+        self.createdAt = createdAt
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(String.self, forKey: .id)
+        name = try container.decode(String.self, forKey: .name)
+        baseURL = try container.decode(URL.self, forKey: .baseURL)
+        dashboardPath = try container.decode(String.self, forKey: .dashboardPath)
+        createdAt = try container.decodeIfPresent(Date.self, forKey: .createdAt) ?? Date()
+    }
 
     static let production = InstanceConfig(
         id: AppConstants.defaultInstanceID,
@@ -24,6 +52,17 @@ struct WidgetDisplayConfig: Codable, Identifiable, Hashable {
     var refreshIntervalSec: Int
     var timeRange: TimeRange
     var maxAccounts: Int
+    var accountID: Int64? = nil
+    var accountIDs: [Int64]? = nil
+
+    /// Single source of truth for which accounts a widget displays: `accountIDs`
+    /// when the user picked several, otherwise the legacy single `accountID`.
+    /// Empty means "auto-select schedulable accounts".
+    var selectedAccountIDs: [Int64] {
+        if let accountIDs, !accountIDs.isEmpty { return accountIDs }
+        if let accountID { return [accountID] }
+        return []
+    }
 
     static let defaultActivity = WidgetDisplayConfig(
         id: "default-activity",
@@ -41,7 +80,7 @@ struct WidgetDisplayConfig: Codable, Identifiable, Hashable {
         kind: .serverHealth,
         platformFilter: nil,
         refreshIntervalSec: RefreshInterval.fifteen.rawValue,
-        timeRange: .oneHour,
+        timeRange: .fiveMinutes,
         maxAccounts: 0
     )
 }
@@ -56,11 +95,25 @@ struct MonitorSnapshot: Codable, Identifiable {
     var authState: AuthState
     var staleReason: String?
     var diagnostics: RefreshDiagnostics
+    var dataState: SnapshotDataState? = .available
+    var accounts: [AccountMonitor]? = nil
+
+    var monitoredAccounts: [AccountMonitor] { accounts ?? [] }
 
     var isStale: Bool {
-        staleReason != nil || expiresAt < Date()
+        isStale(at: Date())
     }
 
+    func isStale(at date: Date) -> Bool {
+        dataState != .available || staleReason != nil || expiresAt < date
+    }
+
+    /// Fabricated sample data for the WidgetKit gallery preview ONLY.
+    ///
+    /// Never return this from a real render path: a monitoring tool displaying
+    /// invented figures (e.g. "226 openai accounts, health 92") destroys user
+    /// trust. `Sub2APIProvider.placeholder(in:)` is the only sanctioned caller —
+    /// real paths must use `unavailable(instanceID:reason:)`.
     static func placeholder(instanceID: String = AppConstants.defaultInstanceID) -> MonitorSnapshot {
         MonitorSnapshot(
             instanceID: instanceID,
@@ -100,6 +153,44 @@ struct MonitorSnapshot: Codable, Identifiable {
             diagnostics: .init(lastFetchAt: Date(), nextFetchAt: Date().addingTimeInterval(5), lastSnapshotWriteAt: Date(), lastWidgetReloadRequestAt: Date(), lastWidgetRenderAt: Date(), lastError: nil)
         )
     }
+
+    static func unavailable(
+        instanceID: String = AppConstants.defaultInstanceID,
+        reason: String = "暂无监控数据",
+        authState: AuthState = .signedOut
+    ) -> MonitorSnapshot {
+        MonitorSnapshot(
+            instanceID: instanceID,
+            generatedAt: Date(),
+            expiresAt: Date(),
+            platforms: PlatformID.allCases.map {
+                PlatformActivity(
+                    platform: $0,
+                    currentInUse: 0,
+                    maxCapacity: 0,
+                    waitingInQueue: 0,
+                    loadPercent: 0,
+                    activeAccounts: [],
+                    availableCount: 0,
+                    totalAccounts: 0,
+                    rateLimitedCount: 0,
+                    errorCount: 0
+                )
+            },
+            server: .empty,
+            authState: authState,
+            staleReason: reason,
+            diagnostics: .empty,
+            dataState: authState.isAuthenticated ? .unavailable : .signedOut
+        )
+    }
+}
+
+enum SnapshotDataState: String, Codable {
+    case available
+    case partial
+    case unavailable
+    case signedOut
 }
 
 struct PlatformActivity: Codable, Identifiable {
@@ -138,6 +229,88 @@ struct ActiveAccount: Codable, Identifiable, Hashable {
     var hasActivity: Bool {
         currentInUse > 0 || waitingInQueue > 0
     }
+}
+
+struct AccountMonitor: Codable, Identifiable, Hashable {
+    var id: Int64
+    var name: String
+    var platform: String
+    var type: String
+    var status: AccountHealthStatus
+    var statusMessage: String?
+    var schedulable: Bool
+    var currentInUse: Int
+    var maxConcurrency: Int
+    var waitingInQueue: Int
+    var activeSessions: Int?
+    var maxSessions: Int?
+    var currentRPM: Int?
+    var baseRPM: Int?
+    var quotas: [AccountQuotaWindow]
+    var lastUsedAt: Date?
+    var recoveryAt: Date?
+
+    var loadPercent: Double {
+        guard maxConcurrency > 0 else { return 0 }
+        return min(max(Double(currentInUse) / Double(maxConcurrency) * 100, 0), 100)
+    }
+
+    var platformDisplayName: String {
+        PlatformID(rawValue: platform)?.shortName ?? platform.uppercased()
+    }
+
+    var eligibleForAutomaticMonitoring: Bool {
+        schedulable && status != .disabled
+    }
+}
+
+enum AccountHealthStatus: String, Codable, Hashable {
+    case healthy
+    case busy
+    case rateLimited
+    case overloaded
+    case error
+    case unavailable
+    case disabled
+
+    var displayName: String {
+        switch self {
+        case .healthy: "正常"
+        case .busy: "活动中"
+        case .rateLimited: "限流"
+        case .overloaded: "过载"
+        case .error: "异常"
+        case .unavailable: "不可用"
+        case .disabled: "已停用"
+        }
+    }
+
+    var sortPriority: Int {
+        switch self {
+        case .error: 7
+        case .rateLimited: 6
+        case .overloaded: 5
+        case .busy: 4
+        case .unavailable: 3
+        case .disabled: 2
+        case .healthy: 1
+        }
+    }
+}
+
+struct AccountQuotaWindow: Codable, Identifiable, Hashable {
+    var kind: String
+    var label: String
+    var used: Double
+    var limit: Double
+    var resetAt: Date?
+
+    var id: String { kind }
+    var usedPercent: Double {
+        guard limit > 0 else { return 0 }
+        return min(max(used / limit * 100, 0), 100)
+    }
+    var remaining: Double { max(limit - used, 0) }
 }
 
 struct ServerHealth: Codable {
@@ -182,6 +355,28 @@ struct ServerHealth: Codable {
         queueDepth: 0,
         jobStatus: .ok
     )
+
+    static let empty = ServerHealth(
+        healthScore: 0,
+        requestCount: 0,
+        tokenConsumed: 0,
+        qps: RateSummary(current: 0, peak: 0, avg: 0),
+        tps: RateSummary(current: 0, peak: 0, avg: 0),
+        slaPercent: 0,
+        errorRate: 0,
+        upstreamErrorRate: 0,
+        durationP99: nil,
+        ttftP99: nil,
+        cpuPercent: nil,
+        memoryPercent: nil,
+        memoryUsedMB: nil,
+        memoryTotalMB: nil,
+        dbStatus: .unknown,
+        redisStatus: .unknown,
+        goroutines: nil,
+        queueDepth: nil,
+        jobStatus: .unknown
+    )
 }
 
 struct RateSummary: Codable, Hashable {
@@ -222,10 +417,19 @@ struct RefreshDiagnostics: Codable {
     var lastWidgetReloadRequestAt: Date?
     var lastWidgetRenderAt: Date?
     var lastError: String?
+
+    static let empty = RefreshDiagnostics(
+        lastFetchAt: nil,
+        nextFetchAt: nil,
+        lastSnapshotWriteAt: nil,
+        lastWidgetReloadRequestAt: nil,
+        lastWidgetRenderAt: nil,
+        lastError: nil
+    )
 }
 
 struct APIEnvelope<T: Decodable>: Decodable {
     var code: Int?
     var message: String?
-    var data: T
+    var data: T?
 }

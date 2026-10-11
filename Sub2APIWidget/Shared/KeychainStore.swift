@@ -6,6 +6,7 @@ struct AuthTokenBundle: Codable, Equatable {
     var refreshToken: String?
     var expiresAt: Date?
     var userEmail: String?
+    var origin: String? = nil
 }
 
 enum KeychainStore {
@@ -13,14 +14,16 @@ enum KeychainStore {
         "xyz.rorii.Sub2APIWidget"
     ]
 
-    static func saveTokens(_ tokens: AuthTokenBundle, instanceID: String) throws {
-        let data = try JSONEncoder.sub2api.encode(tokens)
-        let account = accountName(instanceID: instanceID)
+    static func saveTokens(_ tokens: AuthTokenBundle, for instance: InstanceConfig) throws {
+        var scopedTokens = tokens
+        scopedTokens.origin = instance.baseURL.normalizedOrigin
+        let data = try JSONEncoder.sub2api.encode(scopedTokens)
+        let account = accountName(instanceID: instance.id)
         SecItemDelete(baseQuery(account: account, service: AppConstants.bundleID) as CFDictionary)
 
         var query = baseQuery(account: account, service: AppConstants.bundleID)
         query[kSecValueData as String] = data
-        query[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlock
+        query[kSecAttrAccessible as String] = kSecAttrAccessibleWhenUnlockedThisDeviceOnly
 
         let status = SecItemAdd(query as CFDictionary, nil)
         guard status == errSecSuccess else {
@@ -28,15 +31,19 @@ enum KeychainStore {
         }
     }
 
-    static func loadTokens(instanceID: String) throws -> AuthTokenBundle? {
-        let account = accountName(instanceID: instanceID)
+    static func loadTokens(for instance: InstanceConfig) throws -> AuthTokenBundle? {
+        let account = accountName(instanceID: instance.id)
         if let tokens = try loadTokens(account: account, service: AppConstants.bundleID) {
+            guard tokens.origin == instance.baseURL.normalizedOrigin else {
+                deleteTokens(instanceID: instance.id)
+                return nil
+            }
             return tokens
         }
         for legacyService in legacyServices {
-            if let tokens = try loadTokens(account: account, service: legacyService) {
-                try? saveTokens(tokens, instanceID: instanceID)
-                return tokens
+            if try loadTokens(account: account, service: legacyService) != nil {
+                deleteTokens(instanceID: instance.id)
+                return nil
             }
         }
         return nil

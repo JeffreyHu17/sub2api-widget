@@ -40,6 +40,7 @@ enum PlatformID: String, CaseIterable, Codable, Identifiable {
 enum WidgetKind: String, Codable, CaseIterable, Identifiable {
     case platformActivity
     case serverHealth
+    case accountMonitor
 
     var id: String { rawValue }
 
@@ -47,6 +48,7 @@ enum WidgetKind: String, Codable, CaseIterable, Identifiable {
         switch self {
         case .platformActivity: "平台活动"
         case .serverHealth: "服务器状态"
+        case .accountMonitor: "账号监控"
         }
     }
 }
