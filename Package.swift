@@ -12,20 +12,22 @@ let package = Package(
         .target(
             name: "Sub2APIWidgetCore",
             path: "Sub2APIWidget/Shared",
-            exclude: [
-                "AppIntents.swift",
-                "KeychainStore.swift",
-                "MetricFormatters.swift",
-                "Poller.swift",
-                "SnapshotStore.swift",
-                "Sub2APIClient.swift"
-            ],
             sources: [
                 "Constants.swift",
                 "Models.swift",
                 "SnapshotBuilder.swift",
                 "Sub2APIDecoding.swift",
-                "URLRouting.swift"
+                "URLRouting.swift",
+                // These used to be excluded, which meant CI never compiled the
+                // highest-risk modules. They are pure Foundation/Security/WidgetKit
+                // and build cleanly on macOS, so keep them under test.
+                "AppIntents.swift",
+                "KeychainStore.swift",
+                "MetricFormatters.swift",
+                "Poller.swift",
+                "SafeMessage.swift",
+                "SnapshotStore.swift",
+                "Sub2APIClient.swift"
             ]
         ),
         .testTarget(

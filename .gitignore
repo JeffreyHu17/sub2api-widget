@@ -4,6 +4,9 @@ sub2api/
 # Project-local debug notes and transient analysis output.
 debug/
 
+# WorkBuddy agent workspace data (local memory and session state).
+.workbuddy/
+
 # macOS and Xcode user state.
 .DS_Store
 **/.DS_Store
