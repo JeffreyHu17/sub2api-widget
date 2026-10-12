@@ -49,6 +49,21 @@
 		500000000000000000000155 /* WidgetComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 500000000000000000000035 /* WidgetComponents.swift */; };
 		500000000000000000000156 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 500000000000000000000036 /* Assets.xcassets */; };
 		500000000000000000000157 /* AccountMonitorWidgetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 500000000000000000000039 /* AccountMonitorWidgetView.swift */; };
+		600000000000000000000101 /* Sub2APIWidgetAgent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 600000000000000000000001 /* Sub2APIWidgetAgent.swift */; };
+		60000000000000000000010A /* Sub2APIWidgetAgent.app in Embed Login Items */ = {isa = PBXBuildFile; fileRef = 600000000000000000000040 /* Sub2APIWidgetAgent.app */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		60000000000000000000010B /* ServiceManagement.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 600000000000000000000071 /* ServiceManagement.framework */; };
+		60000000000000000000010C /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 500000000000000000000072 /* WidgetKit.framework */; };
+		60000000000000000000010D /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 500000000000000000000073 /* Security.framework */; };
+		600000000000000000000121 /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 500000000000000000000021 /* Constants.swift */; };
+		600000000000000000000122 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 500000000000000000000022 /* Models.swift */; };
+		600000000000000000000123 /* Sub2APIDecoding.swift in Sources */ = {isa = PBXBuildFile; fileRef = 500000000000000000000023 /* Sub2APIDecoding.swift */; };
+		600000000000000000000124 /* SnapshotBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 500000000000000000000024 /* SnapshotBuilder.swift */; };
+		600000000000000000000125 /* SnapshotStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 500000000000000000000025 /* SnapshotStore.swift */; };
+		600000000000000000000126 /* KeychainStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 500000000000000000000026 /* KeychainStore.swift */; };
+		600000000000000000000127 /* Sub2APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 500000000000000000000027 /* Sub2APIClient.swift */; };
+		600000000000000000000128 /* Poller.swift in Sources */ = {isa = PBXBuildFile; fileRef = 500000000000000000000028 /* Poller.swift */; };
+		60000000000000000000012A /* URLRouting.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50000000000000000000002A /* URLRouting.swift */; };
+		60000000000000000000012B /* SafeMessage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50000000000000000000002C /* SafeMessage.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -71,6 +86,16 @@
 				500000000000000000000107 /* Sub2APIWidgetExtension.appex in Embed Foundation Extensions */,
 			);
 			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		600000000000000000000502 /* Embed Login Items */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 16;
+			files = (
+				60000000000000000000010A /* Sub2APIWidgetAgent.app in Embed Login Items */,
+			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXCopyFilesBuildPhase section */
@@ -111,6 +136,11 @@
 		500000000000000000000072 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
 		500000000000000000000073 /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = System/Library/Frameworks/Security.framework; sourceTree = SDKROOT; };
 		500000000000000000000074 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
+		600000000000000000000001 /* Sub2APIWidgetAgent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sub2APIWidgetAgent.swift; sourceTree = "<group>"; };
+		600000000000000000000002 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		600000000000000000000003 /* Sub2APIWidgetAgent.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Sub2APIWidgetAgent.entitlements; sourceTree = "<group>"; };
+		600000000000000000000040 /* Sub2APIWidgetAgent.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Sub2APIWidgetAgent.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		600000000000000000000071 /* ServiceManagement.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ServiceManagement.framework; path = System/Library/Frameworks/ServiceManagement.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -135,6 +165,16 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		600000000000000000000601 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				60000000000000000000010B /* ServiceManagement.framework in Frameworks */,
+				60000000000000000000010C /* WidgetKit.framework in Frameworks */,
+				60000000000000000000010D /* Security.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -142,6 +182,7 @@
 			isa = PBXGroup;
 			children = (
 				500000000000000000000310 /* App */,
+				600000000000000000000310 /* Agent */,
 				500000000000000000000320 /* Shared */,
 				500000000000000000000330 /* Widget */,
 				500000000000000000000340 /* Frameworks */,
@@ -211,6 +252,7 @@
 			isa = PBXGroup;
 			children = (
 				500000000000000000000071 /* WebKit.framework */,
+				600000000000000000000071 /* ServiceManagement.framework */,
 				500000000000000000000072 /* WidgetKit.framework */,
 				500000000000000000000073 /* Security.framework */,
 				500000000000000000000074 /* SwiftUI.framework */,
@@ -222,9 +264,20 @@
 			isa = PBXGroup;
 			children = (
 				500000000000000000000040 /* Sub2APIWidget.app */,
+				600000000000000000000040 /* Sub2APIWidgetAgent.app */,
 				500000000000000000000041 /* Sub2APIWidgetExtension.appex */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		600000000000000000000310 /* Agent */ = {
+			isa = PBXGroup;
+			children = (
+				600000000000000000000001 /* Sub2APIWidgetAgent.swift */,
+				600000000000000000000002 /* Info.plist */,
+				600000000000000000000003 /* Sub2APIWidgetAgent.entitlements */,
+			);
+			path = Agent;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -266,6 +319,24 @@
 			productReference = 500000000000000000000041 /* Sub2APIWidgetExtension.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
+		600000000000000000000401 /* Sub2APIWidgetAgent */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 600000000000000000000901 /* Build configuration list for PBXNativeTarget "Sub2APIWidgetAgent" */;
+			buildPhases = (
+				600000000000000000000501 /* Sources */,
+				600000000000000000000601 /* Frameworks */,
+				600000000000000000000701 /* Resources */,
+				600000000000000000000502 /* Embed Login Items */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Sub2APIWidgetAgent;
+			productName = Sub2APIWidgetAgent;
+			productReference = 600000000000000000000040 /* Sub2APIWidgetAgent.app */;
+			productType = "com.apple.product-type.application";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -298,6 +369,7 @@
 			projectRoot = "";
 			targets = (
 				500000000000000000000401 /* Sub2APIWidget */,
+				600000000000000000000401 /* Sub2APIWidgetAgent */,
 				500000000000000000000402 /* Sub2APIWidgetExtension */,
 			);
 		};
@@ -318,6 +390,13 @@
 			buildActionMask = 2147483647;
 			files = (
 				500000000000000000000156 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		600000000000000000000701 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -366,6 +445,24 @@
 				50000000000000000000013A /* URLRouting.swift in Sources */,
 				50000000000000000000013B /* MetricFormatters.swift in Sources */,
 				50000000000000000000013D /* SafeMessage.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		600000000000000000000501 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				600000000000000000000101 /* Sub2APIWidgetAgent.swift in Sources */,
+				600000000000000000000121 /* Constants.swift in Sources */,
+				600000000000000000000122 /* Models.swift in Sources */,
+				600000000000000000000123 /* Sub2APIDecoding.swift in Sources */,
+				600000000000000000000124 /* SnapshotBuilder.swift in Sources */,
+				600000000000000000000125 /* SnapshotStore.swift in Sources */,
+				600000000000000000000126 /* KeychainStore.swift in Sources */,
+				600000000000000000000127 /* Sub2APIClient.swift in Sources */,
+				600000000000000000000128 /* Poller.swift in Sources */,
+				60000000000000000000012A /* URLRouting.swift in Sources */,
+				60000000000000000000012B /* SafeMessage.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -604,6 +701,49 @@
 			};
 			name = Release;
 		};
+		600000000000000000000902 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = Agent/Sub2APIWidgetAgent.entitlements;
+				CODE_SIGN_STYLE = Manual;
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Developer ID Application";
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Agent/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				PRODUCT_BUNDLE_IDENTIFIER = top.jeffreyhjh.Sub2APIWidget.Agent;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 6.0;
+			};
+			name = Debug;
+		};
+		600000000000000000000903 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = Agent/Sub2APIWidgetAgent.entitlements;
+				CODE_SIGN_STYLE = Manual;
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Developer ID Application";
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Agent/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				PRODUCT_BUNDLE_IDENTIFIER = top.jeffreyhjh.Sub2APIWidget.Agent;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "$(APP_PROVISIONING_PROFILE_SPECIFIER)";
+				SWIFT_VERSION = 6.0;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -630,6 +770,15 @@
 			buildConfigurations = (
 				500000000000000000000821 /* Debug */,
 				500000000000000000000822 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		600000000000000000000901 /* Build configuration list for PBXNativeTarget "Sub2APIWidgetAgent" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				600000000000000000000902 /* Debug */,
+				600000000000000000000903 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
