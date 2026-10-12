@@ -3,11 +3,78 @@ import Foundation
 enum AppConstants {
     static let appGroupID = "group.top.jeffreyhjh.Sub2APIWidget"
     static let bundleID = "top.jeffreyhjh.Sub2APIWidget"
+    static let agentBundleID = "top.jeffreyhjh.Sub2APIWidget.Agent"
     static let widgetBundleID = "top.jeffreyhjh.Sub2APIWidget.WidgetExtension"
     static let defaultInstanceID = "rorii-production"
     static let defaultInstanceName = "Rorii Sub2API"
     static let defaultBaseURL = URL(string: "https://api.rorii.xyz")!
     static let defaultDashboardPath = "/admin/ops"
+}
+
+/// Settings shared between the app and the background agent. Both processes
+/// read the same App Group defaults so a refresh interval chosen in the UI is
+/// picked up by the login item without any extra plumbing.
+enum BackgroundPreferences {
+    private enum Key {
+        static let refreshInterval = "monitor.refreshInterval"
+        static let monitoringEnabled = "monitor.enabled"
+        static let backgroundServiceDesired = "monitor.backgroundServiceDesired"
+        static let registeredHelperFingerprint = "monitor.registeredHelperFingerprint"
+    }
+
+    private static var defaults: UserDefaults {
+        UserDefaults(suiteName: AppConstants.appGroupID) ?? .standard
+    }
+
+    static var refreshInterval: RefreshInterval {
+        get {
+            RefreshInterval(rawValue: defaults.integer(forKey: Key.refreshInterval)) ?? .five
+        }
+        set {
+            defaults.set(newValue.rawValue, forKey: Key.refreshInterval)
+        }
+    }
+
+    static var monitoringEnabled: Bool {
+        get {
+            guard defaults.object(forKey: Key.monitoringEnabled) != nil else { return true }
+            return defaults.bool(forKey: Key.monitoringEnabled)
+        }
+        set {
+            defaults.set(newValue, forKey: Key.monitoringEnabled)
+        }
+    }
+
+    static var backgroundServiceDesired: Bool {
+        get {
+            guard defaults.object(forKey: Key.backgroundServiceDesired) != nil else { return true }
+            return defaults.bool(forKey: Key.backgroundServiceDesired)
+        }
+        set {
+            defaults.set(newValue, forKey: Key.backgroundServiceDesired)
+        }
+    }
+
+    static var registeredHelperFingerprint: String? {
+        get {
+            defaults.string(forKey: Key.registeredHelperFingerprint)
+        }
+        set {
+            defaults.set(newValue, forKey: Key.registeredHelperFingerprint)
+        }
+    }
+
+    static func displayConfig(for instance: InstanceConfig) -> WidgetDisplayConfig {
+        WidgetDisplayConfig(
+            id: "\(instance.id)-platform-all",
+            instanceID: instance.id,
+            kind: .platformActivity,
+            platformFilter: nil,
+            refreshIntervalSec: refreshInterval.rawValue,
+            timeRange: .fiveMinutes,
+            maxAccounts: 6
+        )
+    }
 }
 
 enum PlatformID: String, CaseIterable, Codable, Identifiable {

@@ -77,6 +77,18 @@ struct ContentView: View {
                         Task { await appState.pollNow() }
                     }
                 }
+                Toggle("退出 App 后继续更新", isOn: Binding(
+                    get: { appState.backgroundServiceDesired },
+                    set: { appState.setBackgroundServiceEnabled($0) }
+                ))
+                Text(appState.backgroundServiceStatus)
+                    .font(.caption)
+                    .foregroundStyle(appState.backgroundServiceNeedsApproval ? .orange : .secondary)
+                if appState.backgroundServiceNeedsApproval {
+                    Button("打开登录项设置") {
+                        appState.openBackgroundServiceSettings()
+                    }
+                }
             }
 
             Spacer()
