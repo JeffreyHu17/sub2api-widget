@@ -8,6 +8,7 @@ Sub2API monitor endpoints and stores only local app state, snapshots, and tokens
 ## Targets
 
 - `Sub2APIWidget`: SwiftUI macOS app for login, polling, diagnostics, and widget setup.
+- `Sub2APIWidgetAgent`: Background helper app launched via `SMAppService` as a login item to keep desktop widgets refreshed when the main app is closed.
 - `Sub2APIWidgetExtension`: WidgetKit extension with Activity, Server, and Account widgets in small, medium, and large families.
 - `Shared`: Codable models, API client, snapshot store, Keychain wrapper, and AppIntent configuration.
 
@@ -39,7 +40,7 @@ swift test
 
 ## Signed Releases
 
-A push to `main` whose head commit contains `Vx.x.x` triggers the ARM64 release workflow. The workflow refuses to publish unsigned builds because App Group sharing requires valid entitlements.
+Pushing a git tag matching `V*` (e.g. `V1.0.0`) triggers the ARM64 release workflow. The workflow requires approval via the GitHub Actions `release` environment and refuses to publish unsigned builds because App Group sharing requires valid entitlements.
 
 Configure these GitHub Actions secrets before creating a version commit:
 

@@ -73,12 +73,26 @@ enum KeychainStore {
         return try JSONDecoder.sub2api.decode(AuthTokenBundle.self, from: data)
     }
 
+    private static var accessGroup: String? {
+        guard let prefix = Bundle.main.object(forInfoDictionaryKey: "Sub2APIAppIdentifierPrefix") as? String,
+              !prefix.isEmpty,
+              !prefix.contains("$(")
+        else {
+            return nil
+        }
+        return "\(prefix)top.jeffreyhjh.Sub2APIWidget.shared"
+    }
+
     private static func baseQuery(account: String, service: String) -> [String: Any] {
-        [
+        var query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
             kSecAttrAccount as String: account
         ]
+        if let accessGroup {
+            query[kSecAttrAccessGroup as String] = accessGroup
+        }
+        return query
     }
 
     private static func accountName(instanceID: String) -> String {

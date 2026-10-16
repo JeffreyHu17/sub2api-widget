@@ -74,8 +74,8 @@ jobs:
         working-directory: .
         run: swift test
 
-      - name: Build app and widget targets
-        # The SPM package cannot see the App and WidgetExtension targets, where
+      - name: Build app, agent and widget targets
+        # The SPM package cannot see App, Agent and WidgetExtension targets, where
         # the SwiftUI views, WKWebView login and WidgetKit code live. Without this
         # step nothing compiles them until a release archive is cut.
         working-directory: Sub2APIWidget
@@ -83,6 +83,14 @@ jobs:
           xcodebuild \
             -project Sub2APIWidget.xcodeproj \
             -scheme Sub2APIWidget \
+            -configuration Debug \
+            -destination 'platform=macOS' \
+            -derivedDataPath "$RUNNER_TEMP/DerivedData" \
+            CODE_SIGNING_ALLOWED=NO \
+            build
+          xcodebuild \
+            -project Sub2APIWidget.xcodeproj \
+            -scheme Sub2APIWidgetAgent \
             -configuration Debug \
             -destination 'platform=macOS' \
             -derivedDataPath "$RUNNER_TEMP/DerivedData" \
@@ -214,12 +222,16 @@ jobs:
         run: |
           app="$RUNNER_TEMP/Sub2APIWidget.xcarchive/Products/Applications/Sub2APIWidget.app"
           extension="$app/Contents/PlugIns/Sub2APIWidgetExtension.appex"
+          agent="$app/Contents/Library/LoginItems/Sub2APIWidgetAgent.app"
           codesign --verify --deep --strict --verbose=2 "$app"
           codesign --verify --strict --verbose=2 "$extension"
+          codesign --verify --strict --verbose=2 "$agent"
           codesign -d --entitlements :- "$app" > "$RUNNER_TEMP/app-entitlements.plist"
           codesign -d --entitlements :- "$extension" > "$RUNNER_TEMP/widget-entitlements.plist"
+          codesign -d --entitlements :- "$agent" > "$RUNNER_TEMP/agent-entitlements.plist"
           /usr/libexec/PlistBuddy -c 'Print :com.apple.security.application-groups:0' "$RUNNER_TEMP/app-entitlements.plist" | grep -Fx 'group.top.jeffreyhjh.Sub2APIWidget'
           /usr/libexec/PlistBuddy -c 'Print :com.apple.security.application-groups:0' "$RUNNER_TEMP/widget-entitlements.plist" | grep -Fx 'group.top.jeffreyhjh.Sub2APIWidget'
+          /usr/libexec/PlistBuddy -c 'Print :com.apple.security.application-groups:0' "$RUNNER_TEMP/agent-entitlements.plist" | grep -Fx 'group.top.jeffreyhjh.Sub2APIWidget'
 
       - name: Notarize and staple
         run: |

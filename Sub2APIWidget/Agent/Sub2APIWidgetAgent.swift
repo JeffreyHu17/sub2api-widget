@@ -30,6 +30,12 @@ private final class BackgroundPollingController {
     private var loopTask: Task<Void, Never>?
     private var activity: NSObjectProtocol?
 
+    init() {
+        poller.onAuthenticationRequired = {
+            BackgroundPreferences.monitoringEnabled = false
+        }
+    }
+
     func start() {
         guard loopTask == nil else { return }
         activity = ProcessInfo.processInfo.beginActivity(
@@ -49,11 +55,10 @@ private final class BackgroundPollingController {
                     if (try? KeychainStore.loadTokens(for: instance)) != nil {
                         let config = BackgroundPreferences.displayConfig(for: instance)
                         await self.poller.pollOnce(instance: instance, config: config)
-                        nextPollAt = Date().addingTimeInterval(
-                            TimeInterval(BackgroundPreferences.refreshInterval.rawValue)
-                        )
+                        let interval = self.poller.currentInterval(for: config)
+                        nextPollAt = Date().addingTimeInterval(interval)
                     } else {
-                        nextPollAt = Date().addingTimeInterval(5)
+                        nextPollAt = Date().addingTimeInterval(30)
                     }
                 }
 

@@ -74,6 +74,13 @@
 			remoteGlobalIDString = 500000000000000000000402;
 			remoteInfo = Sub2APIWidgetExtension;
 		};
+		600000000000000000000201 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 500000000000000000000300 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 600000000000000000000401;
+			remoteInfo = Sub2APIWidgetAgent;
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -91,11 +98,12 @@
 		600000000000000000000502 /* Embed Login Items */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
-			dstPath = "";
-			dstSubfolderSpec = 16;
+			dstPath = Contents/Library/LoginItems;
+			dstSubfolderSpec = 1;
 			files = (
 				60000000000000000000010A /* Sub2APIWidgetAgent.app in Embed Login Items */,
 			);
+			name = "Embed Login Items";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXCopyFilesBuildPhase section */
@@ -291,11 +299,13 @@
 				500000000000000000000601 /* Frameworks */,
 				500000000000000000000701 /* Resources */,
 				500000000000000000000502 /* Embed Foundation Extensions */,
+				600000000000000000000502 /* Embed Login Items */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 				500000000000000000000202 /* PBXTargetDependency */,
+				600000000000000000000202 /* PBXTargetDependency */,
 			);
 			name = Sub2APIWidget;
 			productName = Sub2APIWidget;
@@ -326,7 +336,6 @@
 				600000000000000000000501 /* Sources */,
 				600000000000000000000601 /* Frameworks */,
 				600000000000000000000701 /* Resources */,
-				600000000000000000000502 /* Embed Login Items */,
 			);
 			buildRules = (
 			);
@@ -473,6 +482,11 @@
 			isa = PBXTargetDependency;
 			target = 500000000000000000000402 /* Sub2APIWidgetExtension */;
 			targetProxy = 500000000000000000000201 /* PBXContainerItemProxy */;
+		};
+		600000000000000000000202 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 600000000000000000000401 /* Sub2APIWidgetAgent */;
+			targetProxy = 600000000000000000000201 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
