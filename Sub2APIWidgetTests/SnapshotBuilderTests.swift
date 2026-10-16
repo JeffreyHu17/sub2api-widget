@@ -126,6 +126,75 @@ struct SnapshotBuilderTests {
         #expect(!URL(string: "https://user:pass@example.com")!.isAllowedSub2APIBaseURL)
     }
 
+    @Test
+    func mergesLiveAccountUsageIntoQuotaWindows() throws {
+        let accounts: AccountsPageDTO = try decodeData("""
+        {
+          "items": [{
+            "id": 101,
+            "name": "Claude Sonnet Account",
+            "platform": "anthropic",
+            "type": "oauth",
+            "concurrency": 5,
+            "current_concurrency": 0,
+            "status": "active",
+            "error_message": "",
+            "schedulable": true,
+            "last_used_at": null,
+            "rate_limit_reset_at": null,
+            "overload_until": null,
+            "temp_unschedulable_until": null,
+            "quota_daily_limit": 0,
+            "quota_daily_used": 0,
+            "quota_daily_reset_at": null,
+            "active_sessions": 0,
+            "max_sessions": 0,
+            "current_rpm": 0,
+            "base_rpm": 0
+          }],
+          "total": 1,
+          "page": 1,
+          "page_size": 1000,
+          "pages": 1
+        }
+        """)
+
+        let usage: AccountUsageDTO = try decodeData("""
+        {
+          "source": "live",
+          "updated_at": "2026-10-16T12:00:00Z",
+          "five_hour": {
+            "utilization": 42.5,
+            "resets_at": "2026-10-16T17:00:00Z",
+            "remaining_seconds": 18000
+          },
+          "seven_day_sonnet": {
+            "utilization": 80.0,
+            "resets_at": "2026-10-23T12:00:00Z"
+          }
+        }
+        """)
+
+        let snapshot = SnapshotBuilder.build(
+            instanceID: "test",
+            concurrency: nil,
+            availability: nil,
+            dashboard: nil,
+            accounts: accounts,
+            usages: [101: usage],
+            authState: .sample,
+            refreshInterval: 15,
+            diagnostics: .empty,
+            staleReason: nil
+        )
+
+        let account = try #require(snapshot.monitoredAccounts.first)
+        #expect(account.quotaSource == "live")
+        #expect(account.quotaUpdatedAt != nil)
+        #expect(account.quotas.contains { $0.kind == "five_hour" && $0.usedPercent == 42.5 })
+        #expect(account.quotas.contains { $0.kind == "seven_day_sonnet" && $0.usedPercent == 80.0 })
+    }
+
     private func decodeData<T: Decodable>(_ json: String) throws -> T {
         try JSONDecoder.sub2api.decode(T.self, from: Data(json.utf8))
     }

@@ -249,6 +249,8 @@ struct AccountMonitor: Codable, Identifiable, Hashable {
     var quotas: [AccountQuotaWindow]
     var lastUsedAt: Date?
     var recoveryAt: Date?
+    var quotaUpdatedAt: Date? = nil
+    var quotaSource: String? = nil
 
     var loadPercent: Double {
         guard maxConcurrency > 0 else { return 0 }

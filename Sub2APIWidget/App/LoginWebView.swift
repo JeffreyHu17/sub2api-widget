@@ -22,6 +22,7 @@ struct LoginWebView: NSViewRepresentable {
         let webView = WKWebView(frame: .zero, configuration: configuration)
         webView.navigationDelegate = context.coordinator
         webView.uiDelegate = context.coordinator
+        context.coordinator.attach(webView)
         webView.load(URLRequest(url: instance.loginURL))
         return webView
     }
@@ -31,6 +32,7 @@ struct LoginWebView: NSViewRepresentable {
     }
 
     static func dismantleNSView(_ nsView: WKWebView, coordinator: Coordinator) {
+        coordinator.cancelValidation()
         nsView.stopLoading()
         nsView.configuration.userContentController.removeScriptMessageHandler(forName: messageHandlerName)
         nsView.navigationDelegate = nil
@@ -85,6 +87,9 @@ struct LoginWebView: NSViewRepresentable {
         private let onTokens: (AuthTokenBundle) -> Void
         private let onStatus: (String) -> Void
         private var didCaptureTokens = false
+        private var isValidating = false
+        private var validationTask: Task<Void, Never>?
+        private weak var webView: WKWebView?
 
         init(
             instance: InstanceConfig,
@@ -101,6 +106,15 @@ struct LoginWebView: NSViewRepresentable {
                 didCaptureTokens = false
             }
             self.instance = instance
+        }
+
+        func attach(_ webView: WKWebView) {
+            self.webView = webView
+        }
+
+        func cancelValidation() {
+            validationTask?.cancel()
+            validationTask = nil
         }
 
         func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
@@ -197,8 +211,12 @@ struct LoginWebView: NSViewRepresentable {
         }
 
         private func accept(payload: WebAuthPayload) {
-            guard !didCaptureTokens, let accessToken = payload.accessToken?.nilIfBlank else { return }
-            didCaptureTokens = true
+            guard !didCaptureTokens,
+                  !isValidating,
+                  let accessToken = payload.accessToken?.nilIfBlank
+            else {
+                return
+            }
 
             let expiresAt = payload.tokenExpiresAt
                 .flatMap(Double.init)
@@ -208,15 +226,47 @@ struct LoginWebView: NSViewRepresentable {
                 .flatMap { try? JSONDecoder().decode(UserDTO.self, from: $0) }
                 .flatMap(\.email)
 
-            onTokens(
-                AuthTokenBundle(
-                    accessToken: accessToken,
-                    refreshToken: payload.refreshToken?.nilIfBlank,
-                    expiresAt: expiresAt,
-                    userEmail: email,
-                    origin: instance.baseURL.normalizedOrigin
-                )
+            let tokenBundle = AuthTokenBundle(
+                accessToken: accessToken,
+                refreshToken: payload.refreshToken?.nilIfBlank,
+                expiresAt: expiresAt,
+                userEmail: email,
+                origin: instance.baseURL.normalizedOrigin
             )
+            let client = Sub2APIClient(instance: instance)
+
+            isValidating = true
+            onStatus("正在验证管理员登录状态")
+            validationTask = Task { @MainActor [weak self] in
+                guard let self else { return }
+                do {
+                    try await client.validateAdminSession(accessToken: accessToken)
+                    try Task.checkCancellation()
+                    self.didCaptureTokens = true
+                    self.isValidating = false
+                    self.validationTask = nil
+                    self.onTokens(tokenBundle)
+                } catch is CancellationError {
+                    return
+                } catch {
+                    self.isValidating = false
+                    self.validationTask = nil
+                    self.onStatus("登录验证失败：\(error.localizedDescription)，请重新登录")
+                    self.clearLocalAuthAndReload()
+                }
+            }
+        }
+
+        private func clearLocalAuthAndReload() {
+            guard let webView else { return }
+            let script = """
+            ['auth_token', 'refresh_token', 'token_expires_at', 'auth_user']
+              .forEach((key) => localStorage.removeItem(key));
+            """
+            webView.evaluateJavaScript(script) { [weak self, weak webView] _, _ in
+                guard let self, let webView else { return }
+                webView.load(URLRequest(url: self.instance.loginURL))
+            }
         }
 
         private func securityOriginMatches(_ origin: WKSecurityOrigin) -> Bool {

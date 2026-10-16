@@ -7,6 +7,7 @@ enum SnapshotBuilder {
         availability: AvailabilityResponseDTO?,
         dashboard: DashboardSnapshotDTO?,
         accounts: AccountsPageDTO?,
+        usages: [Int64: AccountUsageDTO] = [:],
         authState: AuthState,
         refreshInterval: Int,
         diagnostics: RefreshDiagnostics,
@@ -51,7 +52,8 @@ enum SnapshotBuilder {
             accounts: buildAccounts(
                 page: accounts,
                 concurrency: usableConcurrency,
-                availability: usableAvailability
+                availability: usableAvailability,
+                usages: usages
             )
         )
     }
@@ -73,7 +75,8 @@ enum SnapshotBuilder {
     private static func buildAccounts(
         page: AccountsPageDTO?,
         concurrency: ConcurrencyResponseDTO?,
-        availability: AvailabilityResponseDTO?
+        availability: AvailabilityResponseDTO?,
+        usages: [Int64: AccountUsageDTO] = [:]
     ) -> [AccountMonitor] {
         let liveAccounts = concurrency.map { Array($0.account.values) } ?? []
         let availabilityAccounts = availability.map { Array($0.account.values) } ?? []
@@ -91,6 +94,7 @@ enum SnapshotBuilder {
         return (page?.items ?? []).map { account in
             let live = concurrencyByID[account.id]
             let accountAvailability = availabilityByID[account.id]
+            let usage = usages[account.id]
             return AccountMonitor(
                 id: account.id,
                 name: account.name,
@@ -106,13 +110,15 @@ enum SnapshotBuilder {
                 maxSessions: account.maxSessions,
                 currentRPM: account.currentRPM,
                 baseRPM: account.baseRPM,
-                quotas: quotaWindows(account),
+                quotas: quotaWindows(account, usage: usage),
                 lastUsedAt: account.lastUsedAt,
                 recoveryAt: earliestDate([
                     account.rateLimitResetAt,
                     account.overloadUntil,
                     account.tempUnschedulableUntil
-                ])
+                ]),
+                quotaUpdatedAt: usage?.updatedAt,
+                quotaSource: usage?.source
             )
         }
         .sorted(by: sortAccounts)
@@ -134,13 +140,97 @@ enum SnapshotBuilder {
         return .healthy
     }
 
-    private static func quotaWindows(_ account: AccountListItemDTO) -> [AccountQuotaWindow] {
+    private static func quotaWindows(
+        _ account: AccountListItemDTO,
+        usage: AccountUsageDTO? = nil
+    ) -> [AccountQuotaWindow] {
         var windows: [AccountQuotaWindow] = []
+        appendUsageQuota(&windows, kind: "five_hour", label: "5h", progress: usage?.fiveHour)
+        appendUsageQuota(&windows, kind: "seven_day", label: "7d", progress: usage?.sevenDay)
+        appendUsageQuota(&windows, kind: "seven_day_sonnet", label: "7d Sonnet", progress: usage?.sevenDaySonnet)
+        appendUsageQuota(&windows, kind: "seven_day_fable", label: "7d Fable", progress: usage?.sevenDayFable)
+        appendUsageQuota(&windows, kind: "gemini_shared_daily", label: "共享日额", progress: usage?.geminiSharedDaily)
+        appendUsageQuota(&windows, kind: "gemini_pro_daily", label: "Pro 日额", progress: usage?.geminiProDaily)
+        appendUsageQuota(&windows, kind: "gemini_flash_daily", label: "Flash 日额", progress: usage?.geminiFlashDaily)
+        appendUsageQuota(&windows, kind: "gemini_shared_minute", label: "共享 RPM", progress: usage?.geminiSharedMinute)
+        appendUsageQuota(&windows, kind: "gemini_pro_minute", label: "Pro RPM", progress: usage?.geminiProMinute)
+        appendUsageQuota(&windows, kind: "gemini_flash_minute", label: "Flash RPM", progress: usage?.geminiFlashMinute)
+        usage?.antigravityQuota?.forEach { model, quota in
+            appendPercentQuota(
+                &windows,
+                kind: "antigravity_\(model)",
+                label: model,
+                utilization: quota.utilization,
+                resetAt: parseDate(quota.resetTime)
+            )
+        }
+        appendGrokQuota(&windows, kind: "grok_requests", label: "请求额度", quota: usage?.grokRequestQuota)
+        appendGrokQuota(&windows, kind: "grok_tokens", label: "Token 额度", quota: usage?.grokTokenQuota)
         appendQuota(&windows, kind: "window", label: "窗口", used: account.currentWindowCost, limit: account.windowCostLimit, resetAt: nil)
         appendQuota(&windows, kind: "daily", label: "日额度", used: account.quotaDailyUsed, limit: account.quotaDailyLimit, resetAt: parseDate(account.quotaDailyResetAt))
         appendQuota(&windows, kind: "weekly", label: "周额度", used: account.quotaWeeklyUsed, limit: account.quotaWeeklyLimit, resetAt: parseDate(account.quotaWeeklyResetAt))
         appendQuota(&windows, kind: "total", label: "总额度", used: account.quotaUsed, limit: account.quotaLimit, resetAt: nil)
         return windows.sorted { $0.usedPercent > $1.usedPercent }
+    }
+
+    private static func appendUsageQuota(
+        _ windows: inout [AccountQuotaWindow],
+        kind: String,
+        label: String,
+        progress: UsageProgressDTO?
+    ) {
+        guard let progress else { return }
+        if let limit = progress.limitRequests, limit > 0 {
+            windows.append(AccountQuotaWindow(
+                kind: kind,
+                label: label,
+                used: Double(progress.usedRequests ?? 0),
+                limit: Double(limit),
+                resetAt: progress.resetsAt
+            ))
+        } else {
+            appendPercentQuota(
+                &windows,
+                kind: kind,
+                label: label,
+                utilization: progress.utilization,
+                resetAt: progress.resetsAt
+            )
+        }
+    }
+
+    private static func appendPercentQuota(
+        _ windows: inout [AccountQuotaWindow],
+        kind: String,
+        label: String,
+        utilization: Double,
+        resetAt: Date?
+    ) {
+        windows.append(AccountQuotaWindow(
+            kind: kind,
+            label: label,
+            used: min(max(utilization, 0), 100),
+            limit: 100,
+            resetAt: resetAt
+        ))
+    }
+
+    private static func appendGrokQuota(
+        _ windows: inout [AccountQuotaWindow],
+        kind: String,
+        label: String,
+        quota: GrokQuotaWindowDTO?
+    ) {
+        guard let quota, let limit = quota.limit, limit > 0 else { return }
+        let resetAt = parseDate(quota.resetAt)
+            ?? quota.resetUnix.map { Date(timeIntervalSince1970: TimeInterval($0)) }
+        windows.append(AccountQuotaWindow(
+            kind: kind,
+            label: label,
+            used: Double(max(limit - (quota.remaining ?? limit), 0)),
+            limit: Double(limit),
+            resetAt: resetAt
+        ))
     }
 
     private static func appendQuota(
@@ -157,7 +247,7 @@ enum SnapshotBuilder {
 
     private static func parseDate(_ value: String?) -> Date? {
         guard let value else { return nil }
-        return ISO8601DateFormatter().date(from: value)
+        return DateParsers.parseSub2APIDate(value)
     }
 
     private static func earliestDate(_ dates: [Date?]) -> Date? {

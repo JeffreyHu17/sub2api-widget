@@ -70,6 +70,14 @@ actor Sub2APIClient {
         )
     }
 
+    func validateAdminSession(accessToken: String) async throws {
+        let _: ConcurrencyResponseDTO = try await get(
+            path: "/api/v1/admin/ops/concurrency",
+            query: [URLQueryItem(name: "timezone", value: TimeZone.current.identifier)],
+            accessToken: accessToken
+        )
+    }
+
     func fetchSnapshot(tokens: AuthTokenBundle, config: WidgetDisplayConfig) async throws -> MonitorSnapshot {
         var currentTokens = tokens
         do {
@@ -117,6 +125,16 @@ actor Sub2APIClient {
             throw fatal
         }
 
+        let accountUsages = if let items = accounts.value?.items {
+            await fetchAccountUsages(
+                accounts: items,
+                config: config,
+                accessToken: tokens.accessToken
+            )
+        } else {
+            [Int64: AccountUsageDTO]()
+        }
+
         let diagnostics = RefreshDiagnostics(
             lastFetchAt: fetchAt,
             nextFetchAt: nil,
@@ -134,6 +152,7 @@ actor Sub2APIClient {
             availability: availability.value,
             dashboard: dashboard.value,
             accounts: accounts.value,
+            usages: accountUsages,
             authState: AuthState(isAuthenticated: true, userEmail: tokens.userEmail, tokenExpiresAt: tokens.expiresAt),
             refreshInterval: config.refreshIntervalSec,
             diagnostics: diagnostics,
@@ -241,9 +260,153 @@ actor Sub2APIClient {
         }
         return payload
     }
+
+    private func fetchAccountUsages(
+        accounts: [AccountListItemDTO],
+        config: WidgetDisplayConfig,
+        accessToken: String
+    ) async -> [Int64: AccountUsageDTO] {
+        let manuallySelectedIDs = Set(config.selectedAccountIDs)
+        let candidates = Self.usageCandidates(accounts: accounts, manuallySelectedIDs: manuallySelectedIDs)
+        guard !candidates.isEmpty else { return [:] }
+
+        var result: [Int64: AccountUsageDTO] = [:]
+        var missing: [AccountListItemDTO] = []
+        let origin = instance.baseURL.normalizedOrigin ?? instance.baseURL.absoluteString
+
+        for account in candidates {
+            let key = "\(origin):\(account.id)"
+            switch await AccountUsageCache.shared.lookup(key: key, successMaxAge: 300, failureMaxAge: 60) {
+            case .hit(let cached):
+                if let cached {
+                    result[account.id] = cached
+                }
+            case .miss:
+                missing.append(account)
+            }
+        }
+
+        guard !missing.isEmpty else { return result }
+
+        let batchSize = min(max(8, manuallySelectedIDs.count), 16)
+        let batch = Array(missing.prefix(batchSize))
+        await withTaskGroup(of: UsageFetchResult.self) { group in
+            for account in batch {
+                group.addTask { [self] in
+                    do {
+                        let usage = try await fetchAccountUsage(account: account, accessToken: accessToken)
+                        return UsageFetchResult(accountID: account.id, usage: usage)
+                    } catch {
+                        return UsageFetchResult(accountID: account.id, usage: nil)
+                    }
+                }
+            }
+
+            for await item in group {
+                let key = "\(origin):\(item.accountID)"
+                await AccountUsageCache.shared.store(item.usage, for: key)
+                if let usage = item.usage {
+                    result[item.accountID] = usage
+                }
+            }
+        }
+        return result
+    }
+
+    private func fetchAccountUsage(
+        account: AccountListItemDTO,
+        accessToken: String
+    ) async throws -> AccountUsageDTO {
+        if account.platform == "anthropic" && ["oauth", "setup-token"].contains(account.type) {
+            let passive: AccountUsageDTO = try await get(
+                path: "/api/v1/admin/accounts/\(account.id)/usage",
+                query: [URLQueryItem(name: "source", value: "passive")],
+                accessToken: accessToken
+            )
+            if passive.hasAnthropicQuotaData {
+                return passive
+            }
+        }
+
+        return try await get(
+            path: "/api/v1/admin/accounts/\(account.id)/usage",
+            query: [],
+            accessToken: accessToken
+        )
+    }
+
+    private nonisolated static func supportsUsage(_ account: AccountListItemDTO) -> Bool {
+        switch account.platform {
+        case "anthropic":
+            return ["oauth", "setup-token"].contains(account.type)
+        case "gemini":
+            return true
+        case "antigravity", "grok", "openai":
+            return account.type == "oauth"
+        default:
+            return false
+        }
+    }
+
+    nonisolated static func usageCandidates(
+        accounts: [AccountListItemDTO],
+        manuallySelectedIDs: Set<Int64>
+    ) -> [AccountListItemDTO] {
+        accounts
+            .filter {
+                supportsUsage($0)
+                    && ($0.schedulable || manuallySelectedIDs.contains($0.id))
+            }
+            .sorted {
+                let lhsSelected = manuallySelectedIDs.contains($0.id)
+                let rhsSelected = manuallySelectedIDs.contains($1.id)
+                if lhsSelected != rhsSelected { return lhsSelected }
+                if $0.schedulable != $1.schedulable { return $0.schedulable }
+                return $0.id < $1.id
+            }
+    }
 }
 
 private struct APIErrorEnvelope: Decodable {
     var code: Int?
     var message: String?
+}
+
+private struct UsageFetchResult: Sendable {
+    var accountID: Int64
+    var usage: AccountUsageDTO?
+}
+
+private enum AccountUsageCacheLookup: Sendable {
+    case hit(AccountUsageDTO?)
+    case miss
+}
+
+private actor AccountUsageCache {
+    static let shared = AccountUsageCache()
+
+    private struct Entry: Sendable {
+        var storedAt: Date
+        var usage: AccountUsageDTO?
+    }
+
+    private var entries: [String: Entry] = [:]
+
+    func lookup(
+        key: String,
+        successMaxAge: TimeInterval,
+        failureMaxAge: TimeInterval
+    ) -> AccountUsageCacheLookup {
+        guard let entry = entries[key] else { return .miss }
+        let maxAge = entry.usage == nil ? failureMaxAge : successMaxAge
+        guard Date().timeIntervalSince(entry.storedAt) <= maxAge else {
+            entries.removeValue(forKey: key)
+            return .miss
+        }
+        return .hit(entry.usage)
+    }
+
+    func store(_ usage: AccountUsageDTO?, for key: String) {
+        entries[key] = Entry(storedAt: Date(), usage: usage)
+    }
 }

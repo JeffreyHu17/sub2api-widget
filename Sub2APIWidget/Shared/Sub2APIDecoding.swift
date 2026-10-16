@@ -205,6 +205,86 @@ struct AccountListItemDTO: Decodable, Sendable {
     }
 }
 
+struct AccountUsageDTO: Decodable, Sendable {
+    var source: String?
+    var updatedAt: Date?
+    var fiveHour: UsageProgressDTO?
+    var sevenDay: UsageProgressDTO?
+    var sevenDaySonnet: UsageProgressDTO?
+    var sevenDayFable: UsageProgressDTO?
+    var geminiSharedDaily: UsageProgressDTO?
+    var geminiProDaily: UsageProgressDTO?
+    var geminiFlashDaily: UsageProgressDTO?
+    var geminiSharedMinute: UsageProgressDTO?
+    var geminiProMinute: UsageProgressDTO?
+    var geminiFlashMinute: UsageProgressDTO?
+    var antigravityQuota: [String: AntigravityModelQuotaDTO]?
+    var grokRequestQuota: GrokQuotaWindowDTO?
+    var grokTokenQuota: GrokQuotaWindowDTO?
+    var error: String?
+
+    enum CodingKeys: String, CodingKey {
+        case source, error
+        case updatedAt = "updated_at"
+        case fiveHour = "five_hour"
+        case sevenDay = "seven_day"
+        case sevenDaySonnet = "seven_day_sonnet"
+        case sevenDayFable = "seven_day_fable"
+        case geminiSharedDaily = "gemini_shared_daily"
+        case geminiProDaily = "gemini_pro_daily"
+        case geminiFlashDaily = "gemini_flash_daily"
+        case geminiSharedMinute = "gemini_shared_minute"
+        case geminiProMinute = "gemini_pro_minute"
+        case geminiFlashMinute = "gemini_flash_minute"
+        case antigravityQuota = "antigravity_quota"
+        case grokRequestQuota = "grok_request_quota"
+        case grokTokenQuota = "grok_token_quota"
+    }
+
+    var hasAnthropicQuotaData: Bool {
+        fiveHour != nil || sevenDay != nil || sevenDaySonnet != nil || sevenDayFable != nil
+    }
+}
+
+struct UsageProgressDTO: Decodable, Sendable {
+    var utilization: Double
+    var resetsAt: Date?
+    var remainingSeconds: Int?
+    var usedRequests: Int64?
+    var limitRequests: Int64?
+
+    enum CodingKeys: String, CodingKey {
+        case utilization
+        case resetsAt = "resets_at"
+        case remainingSeconds = "remaining_seconds"
+        case usedRequests = "used_requests"
+        case limitRequests = "limit_requests"
+    }
+}
+
+struct AntigravityModelQuotaDTO: Decodable, Sendable {
+    var utilization: Double
+    var resetTime: String?
+
+    enum CodingKeys: String, CodingKey {
+        case utilization
+        case resetTime = "reset_time"
+    }
+}
+
+struct GrokQuotaWindowDTO: Decodable, Sendable {
+    var limit: Int64?
+    var remaining: Int64?
+    var resetUnix: Int64?
+    var resetAt: String?
+
+    enum CodingKeys: String, CodingKey {
+        case limit, remaining
+        case resetUnix = "reset_unix"
+        case resetAt = "reset_at"
+    }
+}
+
 struct DashboardSnapshotDTO: Decodable {
     var generatedAt: Date?
     var overview: DashboardOverviewDTO?
