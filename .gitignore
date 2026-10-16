@@ -4,17 +4,28 @@ sub2api/
 # Project-local debug notes and transient analysis output.
 debug/
 
-# WorkBuddy agent workspace data (local memory and session state).
+# AI agent workspace data (local memory and session state).
 .workbuddy/
+.gemini/
 
-# macOS and Xcode user state.
+# macOS system files.
 .DS_Store
 **/.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+
+# Xcode user state and caches.
 *.xcuserstate
 xcuserdata/
 **/xcuserdata/
+*.moved-aside
+*.hmap
+*.xccheckout
 
-# Xcode build products.
+# Xcode build products and DerivedData.
 DerivedData/
 .build/
 build/
@@ -26,6 +37,16 @@ Archives/
 *.pkg
 *.dmg
 *.zip
+
+# Swift Package Manager.
+.swiftpm/
+
+# IDE and editor files.
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
 
 # Signing and private credentials.
 *.p12
